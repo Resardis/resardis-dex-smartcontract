@@ -6,5 +6,8 @@
   "repository": "https://github.com/kmotoko/resardis-smartcontract.git",
   "author": "None",
   "license": "UNLICENSED",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "truffle": "^5.0.7"
+  }
 }
