@@ -1,0 +1,10 @@
+{
+  "name": "resardis-smartcontract",
+  "version": "0.1.0",
+  "description": "Smart contract for Resardis decentralized cryptocurrency exchange",
+  "main": "index.js",
+  "repository": "https://github.com/kmotoko/resardis-smartcontract.git",
+  "author": "None",
+  "license": "UNLICENSED",
+  "private": true
+}
