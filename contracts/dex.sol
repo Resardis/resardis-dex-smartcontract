@@ -84,7 +84,7 @@ contract Resardis is SafeMath {
   function depositToken(address token, uint amount) public {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=address(0));
-    require(Token(token).transferFrom(msg.sender, this, amount));
+    require(Token(token).transferFrom(msg.sender, address(this), amount));
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
