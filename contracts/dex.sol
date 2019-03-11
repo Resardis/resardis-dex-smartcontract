@@ -21,7 +21,7 @@ contract Resardis is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) public {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
@@ -34,52 +34,52 @@ contract Resardis is SafeMath {
     throw;
   }
 
-  function changeAdmin(address admin_) {
+  function changeAdmin(address admin_) public {
     require(msg.sender == admin);
     admin = admin_;
   }
 
-  function changeAccountLevelsAddr(address accountLevelsAddr_) {
+  function changeAccountLevelsAddr(address accountLevelsAddr_) public {
     require(msg.sender == admin);
     accountLevelsAddr = accountLevelsAddr_;
   }
 
-  function changeFeeAccount(address feeAccount_) {
+  function changeFeeAccount(address feeAccount_) public {
     require(msg.sender == admin);
     feeAccount = feeAccount_;
   }
 
-  function changeFeeMake(uint feeMake_) {
+  function changeFeeMake(uint feeMake_) public {
     require(msg.sender == admin);
     require(feeMake_ <= feeMake);
     feeMake = feeMake_;
   }
 
-  function changeFeeTake(uint feeTake_) {
+  function changeFeeTake(uint feeTake_) public {
     require(msg.sender == admin);
     require(feeTake_ <= feeTake || feeTake_ >= feeRebate);
     feeTake = feeTake_;
   }
 
-  function changeFeeRebate(uint feeRebate_) {
+  function changeFeeRebate(uint feeRebate_) public {
     require(msg.sender == admin);
     require(feeRebate_ >= feeRebate || feeRebate_ <= feeTake);
     feeRebate = feeRebate_;
   }
 
-  function deposit() payable {
+  function deposit() public payable {
     tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
     emit Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
   }
 
-  function withdraw(uint amount) {
+  function withdraw(uint amount) public {
     require(tokens[0][msg.sender] >= amount);
     tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
     require(msg.sender.call.value(amount)());
     emit Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
   }
 
-  function depositToken(address token, uint amount) {
+  function depositToken(address token, uint amount) public {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=0);
     require(Token(token).transferFrom(msg.sender, this, amount));
@@ -87,7 +87,7 @@ contract Resardis is SafeMath {
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
-  function withdrawToken(address token, uint amount) {
+  function withdrawToken(address token, uint amount) public {
     require(token!=0);
     require(tokens[token][msg.sender] >= amount);
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
@@ -95,17 +95,17 @@ contract Resardis is SafeMath {
     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
-  function balanceOf(address token, address user) constant returns (uint) {
+  function balanceOf(address token, address user) public constant returns (uint) {
     return tokens[token][user];
   }
 
-  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     orders[msg.sender][hash] = true;
     emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
 
-  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
+  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public {
     //amount is in amountGet terms
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     require((
@@ -134,7 +134,7 @@ contract Resardis is SafeMath {
     tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
   }
 
-  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) constant returns(bool) {
+  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public constant returns(bool) {
     if (!(
       tokens[tokenGet][sender] >= amount &&
       availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
@@ -142,7 +142,7 @@ contract Resardis is SafeMath {
     return true;
   }
 
-  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     if (!(
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
@@ -154,12 +154,12 @@ contract Resardis is SafeMath {
     return available2;
   }
 
-  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     return orderFills[user][hash];
   }
 
-  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
+  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) public {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     require((orders[msg.sender][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == msg.sender));
     orderFills[msg.sender][hash] = amountGet;
