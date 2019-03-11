@@ -30,8 +30,8 @@ contract Resardis is SafeMath {
     feeRebate = feeRebate_;
   }
 
-  function() {
-    throw;
+  function() external {
+    revert();
   }
 
   function changeAdmin(address admin_) public {
