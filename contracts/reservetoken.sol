@@ -9,13 +9,13 @@ contract ReserveToken is StandardToken, SafeMath {
     minter = msg.sender;
   }
   function create(address account, uint amount) {
-    if (msg.sender != minter) throw;
+    require(msg.sender == minter);
     balances[account] = safeAdd(balances[account], amount);
     totalSupply = safeAdd(totalSupply, amount);
   }
   function destroy(address account, uint amount) {
-    if (msg.sender != minter) throw;
-    if (balances[account] < amount) throw;
+    require(msg.sender == minter);
+    require(balances[account] >= amount);
     balances[account] = safeSub(balances[account], amount);
     totalSupply = safeSub(totalSupply, amount);
   }

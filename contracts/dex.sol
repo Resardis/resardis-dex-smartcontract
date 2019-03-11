@@ -4,7 +4,7 @@ import "./safemath.sol";
 import "./token.sol";
 import "./level.sol";
 
-contract EtherDelta is SafeMath {
+contract Resardis is SafeMath {
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -21,7 +21,7 @@ contract EtherDelta is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  function EtherDelta(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
@@ -35,64 +35,64 @@ contract EtherDelta is SafeMath {
   }
 
   function changeAdmin(address admin_) {
-    if (msg.sender != admin) throw;
+    require(msg.sender == admin);
     admin = admin_;
   }
 
   function changeAccountLevelsAddr(address accountLevelsAddr_) {
-    if (msg.sender != admin) throw;
+    require(msg.sender == admin);
     accountLevelsAddr = accountLevelsAddr_;
   }
 
   function changeFeeAccount(address feeAccount_) {
-    if (msg.sender != admin) throw;
+    require(msg.sender == admin);
     feeAccount = feeAccount_;
   }
 
   function changeFeeMake(uint feeMake_) {
-    if (msg.sender != admin) throw;
-    if (feeMake_ > feeMake) throw;
+    require(msg.sender == admin);
+    require(feeMake_ <= feeMake);
     feeMake = feeMake_;
   }
 
   function changeFeeTake(uint feeTake_) {
-    if (msg.sender != admin) throw;
-    if (feeTake_ > feeTake || feeTake_ < feeRebate) throw;
+    require(msg.sender == admin);
+    require(feeTake_ <= feeTake || feeTake_ >= feeRebate);
     feeTake = feeTake_;
   }
 
   function changeFeeRebate(uint feeRebate_) {
-    if (msg.sender != admin) throw;
-    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) throw;
+    require(msg.sender == admin);
+    require(feeRebate_ >= feeRebate || feeRebate_ <= feeTake);
     feeRebate = feeRebate_;
   }
 
   function deposit() payable {
     tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
-    Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+    emit Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
   }
 
   function withdraw(uint amount) {
-    if (tokens[0][msg.sender] < amount) throw;
+    require(tokens[0][msg.sender] >= amount);
     tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
-    if (!msg.sender.call.value(amount)()) throw;
-    Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+    require(msg.sender.call.value(amount)());
+    emit Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
   }
 
   function depositToken(address token, uint amount) {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-    if (token==0) throw;
-    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    require(token!=0);
+    require(Token(token).transferFrom(msg.sender, this, amount));
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
-    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+    emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) {
-    if (token==0) throw;
-    if (tokens[token][msg.sender] < amount) throw;
+    require(token!=0);
+    require(tokens[token][msg.sender] >= amount);
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
-    if (!Token(token).transfer(msg.sender, amount)) throw;
-    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+    require(Token(token).transfer(msg.sender, amount));
+    emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function balanceOf(address token, address user) constant returns (uint) {
@@ -102,20 +102,20 @@ contract EtherDelta is SafeMath {
   function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     orders[msg.sender][hash] = true;
-    Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+    emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
 
   function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
     //amount is in amountGet terms
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
-    if (!(
-      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+    require((
+      (orders[user][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires &&
       safeAdd(orderFills[user][hash], amount) <= amountGet
-    )) throw;
+    ));
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
     orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
-    Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
+    emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
   }
 
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
@@ -145,7 +145,7 @@ contract EtherDelta is SafeMath {
   function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     if (!(
-      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      (orders[user][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires
     )) return 0;
     uint available1 = safeSub(amountGet, orderFills[user][hash]);
@@ -161,8 +161,8 @@ contract EtherDelta is SafeMath {
 
   function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
-    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) throw;
+    require((orders[msg.sender][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender));
     orderFills[msg.sender][hash] = amountGet;
-    Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
+    emit Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
   }
 }
