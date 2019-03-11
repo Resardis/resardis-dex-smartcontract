@@ -68,27 +68,27 @@ contract Resardis is SafeMath {
   }
 
   function deposit() public payable {
-    tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
-    emit Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+    tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
+    emit Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
   }
 
   function withdraw(uint amount) public {
-    require(tokens[0][msg.sender] >= amount);
-    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
+    require(tokens[address(0)][msg.sender] >= amount);
+    tokens[address(0)][msg.sender] = safeSub(tokens[address(0)][msg.sender], amount);
     require(msg.sender.call.value(amount)());
-    emit Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+    emit Withdraw(address(0), msg.sender, amount, tokens[address(0)][msg.sender]);
   }
 
   function depositToken(address token, uint amount) public {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-    require(token!=0);
+    require(token!=address(0));
     require(Token(token).transferFrom(msg.sender, this, amount));
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) public {
-    require(token!=0);
+    require(token!=address(0));
     require(tokens[token][msg.sender] >= amount);
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
     require(Token(token).transfer(msg.sender, amount));
