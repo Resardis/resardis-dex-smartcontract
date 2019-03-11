@@ -75,7 +75,9 @@ contract Resardis is SafeMath {
   function withdraw(uint amount) public {
     require(tokens[address(0)][msg.sender] >= amount);
     tokens[address(0)][msg.sender] = safeSub(tokens[address(0)][msg.sender], amount);
-    require(msg.sender.call.value(amount)(""));
+    // @TODO: check below if it is the correct way to do it
+    (bool callSuccess, bytes memory returnData) = msg.sender.call.value(amount)("");
+    require(callSuccess);
     emit Withdraw(address(0), msg.sender, amount, tokens[address(0)][msg.sender]);
   }
 
