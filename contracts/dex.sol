@@ -124,7 +124,7 @@ contract Resardis is SafeMath {
     uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
     uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
     uint feeRebateXfer = 0;
-    if (accountLevelsAddr != 0x0) {
+    if (accountLevelsAddr != address(0x0)) {
       uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
       if (accountLevel==1) feeRebateXfer = safeMul(amount, feeRebate) / (1 ether);
       if (accountLevel==2) feeRebateXfer = feeTakeXfer;
