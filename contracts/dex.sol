@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.5.0;
 
 import "./safemath.sol";
 import "./token.sol";
@@ -95,7 +95,7 @@ contract Resardis is SafeMath {
     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
-  function balanceOf(address token, address user) public constant returns (uint) {
+  function balanceOf(address token, address user) public view returns (uint) {
     return tokens[token][user];
   }
 
@@ -134,7 +134,7 @@ contract Resardis is SafeMath {
     tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
   }
 
-  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public constant returns(bool) {
+  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public view returns(bool) {
     if (!(
       tokens[tokenGet][sender] >= amount &&
       availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
@@ -142,7 +142,7 @@ contract Resardis is SafeMath {
     return true;
   }
 
-  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
+  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public view returns(uint) {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     if (!(
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
@@ -154,7 +154,7 @@ contract Resardis is SafeMath {
     return available2;
   }
 
-  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
+  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public view returns(uint) {
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     return orderFills[user][hash];
   }
