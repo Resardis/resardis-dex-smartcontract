@@ -4,7 +4,9 @@ import "./safemath.sol";
 import "./token.sol";
 import "./level.sol";
 
-contract Resardis is SafeMath {
+contract Resardis {
+  using SafeMath for uint256;
+
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -68,13 +70,13 @@ contract Resardis is SafeMath {
   }
 
   function deposit() public payable {
-    tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
+    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].safeAdd(msg.value);
     emit Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
   }
 
   function withdraw(uint amount) public {
     require(tokens[address(0)][msg.sender] >= amount);
-    tokens[address(0)][msg.sender] = safeSub(tokens[address(0)][msg.sender], amount);
+    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].safeSub(amount);
     // @TODO: check below if it is the correct way to do it
     (bool callSuccess, bytes memory returnData) = msg.sender.call.value(amount)("");
     require(callSuccess);
@@ -85,14 +87,14 @@ contract Resardis is SafeMath {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=address(0));
     require(Token(token).transferFrom(msg.sender, address(this), amount));
-    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    tokens[token][msg.sender] = tokens[token][msg.sender].safeAdd(amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) public {
     require(token!=address(0));
     require(tokens[token][msg.sender] >= amount);
-    tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
+    tokens[token][msg.sender] = tokens[token][msg.sender].safeSub(amount);
     require(Token(token).transfer(msg.sender, amount));
     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
@@ -113,27 +115,27 @@ contract Resardis is SafeMath {
     require((
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
       block.number <= expires &&
-      safeAdd(orderFills[user][hash], amount) <= amountGet
+      orderFills[user][hash].safeAdd(amount) <= amountGet
     ));
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
-    orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
+    orderFills[user][hash] = orderFills[user][hash].safeAdd(amount);
     emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
   }
 
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
-    uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
-    uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
+    uint feeMakeXfer = amount.safeMul(feeMake) / (1 ether);
+    uint feeTakeXfer = amount.safeMul(feeTake) / (1 ether);
     uint feeRebateXfer = 0;
     if (accountLevelsAddr != address(0x0)) {
       uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
-      if (accountLevel==1) feeRebateXfer = safeMul(amount, feeRebate) / (1 ether);
+      if (accountLevel==1) feeRebateXfer = amount.safeMul(feeRebate) / (1 ether);
       if (accountLevel==2) feeRebateXfer = feeTakeXfer;
     }
-    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
-    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(safeAdd(amount, feeRebateXfer), feeMakeXfer));
-    tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeSub(safeAdd(feeMakeXfer, feeTakeXfer), feeRebateXfer));
-    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
-    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
+    tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].safeSub(amount.safeAdd(feeTakeXfer));
+    tokens[tokenGet][user] = tokens[tokenGet][user].safeAdd(amount.safeAdd(feeRebateXfer).safeSub(feeMakeXfer));
+    tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].safeAdd(feeMakeXfer.safeAdd(feeTakeXfer).safeSub(feeRebateXfer));
+    tokens[tokenGive][user] = tokens[tokenGive][user].safeSub(amountGive.safeMul(amount) / amountGet);
+    tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].safeAdd(amountGive.safeMul(amount) / amountGet);
   }
 
   function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public view returns(bool) {
@@ -150,8 +152,8 @@ contract Resardis is SafeMath {
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
       block.number <= expires
     )) return 0;
-    uint available1 = safeSub(amountGet, orderFills[user][hash]);
-    uint available2 = safeMul(tokens[tokenGive][user], amountGet) / amountGive;
+    uint available1 = amountGet.safeSub(orderFills[user][hash]);
+    uint available2 = amountGet.safeMul(tokens[tokenGive][user]) / amountGive;
     if (available1<available2) return available1;
     return available2;
   }
