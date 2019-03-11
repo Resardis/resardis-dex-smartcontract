@@ -77,9 +77,7 @@ contract Resardis {
   function withdraw(uint amount) public {
     require(tokens[address(0)][msg.sender] >= amount);
     tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].safeSub(amount);
-    // @TODO: check below if it is the correct way to do it
-    (bool callSuccess, bytes memory returnData) = msg.sender.call.value(amount)("");
-    require(callSuccess);
+    msg.sender.transfer(amount);
     emit Withdraw(address(0), msg.sender, amount, tokens[address(0)][msg.sender]);
   }
 
