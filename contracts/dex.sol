@@ -70,13 +70,13 @@ contract Resardis {
   }
 
   function deposit() public payable {
-    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].safeAdd(msg.value);
+    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].add(msg.value);
     emit Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
   }
 
   function withdraw(uint amount) public {
     require(tokens[address(0)][msg.sender] >= amount);
-    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].safeSub(amount);
+    tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].sub(amount);
     msg.sender.transfer(amount);
     emit Withdraw(address(0), msg.sender, amount, tokens[address(0)][msg.sender]);
   }
@@ -85,14 +85,14 @@ contract Resardis {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=address(0));
     require(Token(token).transferFrom(msg.sender, address(this), amount));
-    tokens[token][msg.sender] = tokens[token][msg.sender].safeAdd(amount);
+    tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) public {
     require(token!=address(0));
     require(tokens[token][msg.sender] >= amount);
-    tokens[token][msg.sender] = tokens[token][msg.sender].safeSub(amount);
+    tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
     require(Token(token).transfer(msg.sender, amount));
     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
@@ -113,27 +113,27 @@ contract Resardis {
     require((
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
       block.number <= expires &&
-      orderFills[user][hash].safeAdd(amount) <= amountGet
+      orderFills[user][hash].add(amount) <= amountGet
     ));
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
-    orderFills[user][hash] = orderFills[user][hash].safeAdd(amount);
+    orderFills[user][hash] = orderFills[user][hash].add(amount);
     emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
   }
 
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
-    uint feeMakeXfer = amount.safeMul(feeMake) / (1 ether);
-    uint feeTakeXfer = amount.safeMul(feeTake) / (1 ether);
+    uint feeMakeXfer = amount.mul(feeMake) / (1 ether);
+    uint feeTakeXfer = amount.mul(feeTake) / (1 ether);
     uint feeRebateXfer = 0;
     if (accountLevelsAddr != address(0x0)) {
       uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
-      if (accountLevel==1) feeRebateXfer = amount.safeMul(feeRebate) / (1 ether);
+      if (accountLevel==1) feeRebateXfer = amount.mul(feeRebate) / (1 ether);
       if (accountLevel==2) feeRebateXfer = feeTakeXfer;
     }
-    tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].safeSub(amount.safeAdd(feeTakeXfer));
-    tokens[tokenGet][user] = tokens[tokenGet][user].safeAdd(amount.safeAdd(feeRebateXfer).safeSub(feeMakeXfer));
-    tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].safeAdd(feeMakeXfer.safeAdd(feeTakeXfer).safeSub(feeRebateXfer));
-    tokens[tokenGive][user] = tokens[tokenGive][user].safeSub(amountGive.safeMul(amount) / amountGet);
-    tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].safeAdd(amountGive.safeMul(amount) / amountGet);
+    tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
+    tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.add(feeRebateXfer).sub(feeMakeXfer));
+    tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer).sub(feeRebateXfer));
+    tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+    tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
   }
 
   function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public view returns(bool) {
@@ -150,8 +150,8 @@ contract Resardis {
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
       block.number <= expires
     )) return 0;
-    uint available1 = amountGet.safeSub(orderFills[user][hash]);
-    uint available2 = amountGet.safeMul(tokens[tokenGive][user]) / amountGive;
+    uint available1 = amountGet.sub(orderFills[user][hash]);
+    uint available2 = amountGet.mul(tokens[tokenGive][user]) / amountGive;
     if (available1<available2) return available1;
     return available2;
   }
