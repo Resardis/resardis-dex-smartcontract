@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./safemath.sol";
-import "./token.sol";
+import "./standardtoken.sol";
 import "./level.sol";
 
 contract Resardis {
