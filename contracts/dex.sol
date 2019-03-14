@@ -13,6 +13,7 @@ contract Resardis {
   uint public feeMake; //percentage times (1 ether)
   uint public feeTake; //percentage times (1 ether)
   uint public feeRebate; //percentage times (1 ether)
+  uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
   mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
@@ -23,13 +24,14 @@ contract Resardis {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) public {
+  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_, uint noFeeUntil_) public {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
     feeMake = feeMake_;
     feeTake = feeTake_;
     feeRebate = feeRebate_;
+    noFeeUntil = noFeeUntil_;
   }
 
   function() external {
@@ -67,6 +69,12 @@ contract Resardis {
     require(msg.sender == admin);
     require(feeRebate_ >= feeRebate || feeRebate_ <= feeTake);
     feeRebate = feeRebate_;
+  }
+
+  function changeNoFeeUntil(uint noFeeUntil_) public {
+    require(msg.sender == admin);
+    require(now < noFeeUntil_);
+    noFeeUntil = noFeeUntil_;
   }
 
   function deposit() public payable {
@@ -121,9 +129,15 @@ contract Resardis {
   }
 
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
-    uint feeMakeXfer = amount.mul(feeMake) / (1 ether);
-    uint feeTakeXfer = amount.mul(feeTake) / (1 ether);
+    uint feeMakeXfer = 0;
+    uint feeTakeXfer = 0;
     uint feeRebateXfer = 0;
+
+    if (now >= noFeeUntil) {
+      feeMakeXfer = amount.mul(feeMake) / (1 ether);
+      feeTakeXfer = amount.mul(feeTake) / (1 ether);
+    }
+
     if (accountLevelsAddr != address(0x0)) {
       uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
       if (accountLevel==1) feeRebateXfer = amount.mul(feeRebate) / (1 ether);
