@@ -1,6 +1,6 @@
 const Resardis = artifacts.require("Resardis");
 
-contract("TestResardis", async accounts => {
+contract("TestResardis-ChangeFunctions", async accounts => {
 
   it("Try to change the maker, taker and rebate fees and fail", async () => {
     let instance = await Resardis.deployed();
