@@ -37,5 +37,6 @@ Also see [Yarn Workflow](https://yarnpkg.com/en/docs/yarn-workflow).
 ### Deploying and Testing
 ```shell
 cd <projectDir>
-bash scripts/test.sh --network development
+yarn solhint "contracts/**/*.sol"  # Linting
+bash scripts/test.sh --network development  # Testing
 ```
