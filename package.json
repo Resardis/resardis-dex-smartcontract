@@ -9,6 +9,7 @@
   "private": true,
   "devDependencies": {
     "ganache-cli": "^6.4.1",
+    "solhint": "^2.0.0",
     "truffle": "^5.0.7"
   }
 }
