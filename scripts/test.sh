@@ -20,15 +20,21 @@ ganache_running() {
 }
 
 start_ganache() {
+  # Run client as a background job
+  # Send standard output to void/null file
   node_modules/.bin/ganache-cli --port "$ganache_port" --host "127.0.0.1" > /dev/null &
+  # Get the process ID of the last background process
   ganache_pid=$!
 }
 
 if ganache_running; then
-  echo "Using existing ganache instance"
+  echo "Ganache port is in use"
+  echo "If it is another program using the same port, please close it"
+  echo "Assuming it is ganache, using existing ganache instance"
 else
-  echo "Starting our own ganache instance"
+  echo "Starting a new ganache instance"
   start_ganache
 fi
 
+# Feed command line options to truffle test
 node_modules/.bin/truffle test "$@"
