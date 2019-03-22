@@ -37,9 +37,5 @@ Also see [Yarn Workflow](https://yarnpkg.com/en/docs/yarn-workflow).
 ### Deploying and Testing
 ```shell
 cd <projectDir>
-yarn ganache-cli -p 9545 -h "127.0.0.1"  # startup Ethereum client
-# if you only want to compile and deploy:
-yarn truffle migrate --reset --compile-all --network development
-# if you also want to test (below already compiles & deploys):
-yarn truffle test --network development
+bash scripts/test.sh --network development
 ```
