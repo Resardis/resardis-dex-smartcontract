@@ -1,7 +1,9 @@
-const Resardis = artifacts.require("Resardis");
+'use strict';
 
-module.exports = function(deployer, network, accounts) {
-  if (network == "development") {
+const Resardis = artifacts.require('Resardis');
+
+module.exports = function (deployer, network, accounts) {
+  if (network == 'development') { // eslint-disable-line
     const admin = accounts[0];
     const feeAccount = accounts[1];
     const accountLevelsAddr = accounts[9];

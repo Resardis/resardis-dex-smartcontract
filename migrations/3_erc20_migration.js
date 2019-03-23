@@ -1,7 +1,9 @@
-const erc20 = artifacts.require("ERC20");
+'use strict';
 
-module.exports = function(deployer, network, accounts) {
-  if (network == "development") {
+const erc20 = artifacts.require('ERC20');
+
+module.exports = function (deployer, network, accounts) {
+  if (network == 'development') { // eslint-disable-line
     deployer.deploy(erc20);
   }
 };
