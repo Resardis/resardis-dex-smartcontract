@@ -49,6 +49,9 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     const newFeeRebate = await instance.feeRebate.call();
     // Do not compare BN/BigNumber objects
     // Instead, compare the string versions
+    assert.notEqual(oldFeeMake.toString(), newFeeMake.toString());
+    assert.notEqual(oldFeeTake.toString(), newFeeTake.toString());
+    assert.notEqual(oldFeeRebate.toString(), newFeeRebate.toString());
     assert.equal(putativeFeeMake.toString(), newFeeMake.toString());
     assert.equal(putativeFeeTake.toString(), newFeeTake.toString());
     assert.equal(putativeFeeRebate.toString(), newFeeRebate.toString());
@@ -90,6 +93,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('Eror while changing no-fee-until date.');
     }
     const newNoFeeUntil = await instance.noFeeUntil.call();
+    assert.notEqual(oldNoFeeUntil.toString(), newNoFeeUntil.toString());
     assert.equal(putativeNoFeeUntil.toString(), newNoFeeUntil.toString());
   });
 
@@ -117,6 +121,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('Error while changing the fee account.');
     }
     const newFeeAccount = await instance.feeAccount.call();
+    assert.notEqual(oldFeeAccount, newFeeAccount);
     assert.equal(putativeFeeAccount, newFeeAccount);
   });
 
@@ -144,6 +149,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('Error while changing the account levels address.');
     }
     const newAccLevAddr = await instance.accountLevelsAddr.call();
+    assert.notEqual(oldAccLevAddr, newAccLevAddr);
     assert.equal(putativeAccLevAddr, newAccLevAddr);
   });
 
