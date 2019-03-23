@@ -92,7 +92,7 @@ contract Resardis {
   function depositToken(address token, uint amount) public {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=address(0));
-    require(Token(token).transferFrom(msg.sender, address(this), amount));
+    require(IERC20(token).transferFrom(msg.sender, address(this), amount));
     tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
@@ -101,7 +101,7 @@ contract Resardis {
     require(token!=address(0));
     require(tokens[token][msg.sender] >= amount);
     tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
-    require(Token(token).transfer(msg.sender, amount));
+    require(IERC20(token).transfer(msg.sender, amount));
     emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
