@@ -1,0 +1,8 @@
+build/
+node_modules/
+.git/
+*.lock
+*.md
+*.sh
+*.sol
+*.txt
