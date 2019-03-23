@@ -37,6 +37,8 @@ Also see [Yarn Workflow](https://yarnpkg.com/en/docs/yarn-workflow).
 ### Deploying and Testing
 ```shell
 cd <projectDir>
-yarn solhint "contracts/**/*.sol"  # Linting
+yarn solhint "contracts/**/*.sol"  # Linting Solidity files
+yarn eslint .  # Linting JavaScript files, checking-only
+yarn eslint --fix .  # Auto-fix
 bash scripts/test.sh --network development  # Testing
 ```
