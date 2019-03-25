@@ -53,7 +53,7 @@ contract('TestResardis-EthFunding', async accounts => {
     await instance.withdraw(drawAmount, { from: drawAccount });
     const finalBalance = await instance.balanceOf(addressZero, drawAccount, { from: drawAccount });
 
-    assert.notEqual(drawAmount.toString(), finalBalance.toString());
+    assert.notEqual(diffAmount.toString(), initBalance.toString());
     assert.notEqual(initBalance.toString(), finalBalance.toString());
     assert.equal(diffAmount.toString(), finalBalance.toString());
   });
