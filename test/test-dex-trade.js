@@ -26,7 +26,7 @@ contract('TestResardis-Trading', async accounts => {
     tokenInstance = await erc20.deployed();
   });
 
-  it('Try to place an order and succeed', async () => {
+  it('Try to place an order, then cancel it, and succeed', async () => {
     const tokenGet = web3.utils.toChecksumAddress(tokenInstance.address);
     const tokenGive = web3.utils.toChecksumAddress(addressZero);
     // deposit some ETH
@@ -45,18 +45,34 @@ contract('TestResardis-Trading', async accounts => {
       orderNonce, { from: firstAccount, value: 0 }
     );
     // check how much of the order volume is available and/or filled
-    const available = await dexInstance.availableVolume(
+    const availableFirst = await dexInstance.availableVolume(
       tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce,
       firstAccount, 0, '0x0', '0x0', { from: firstAccount }
     );
-    const filled = await dexInstance.amountFilled(
+    const filledFirst = await dexInstance.amountFilled(
+      tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce,
+      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+    );
+    // cancel the order
+    await dexInstance.cancelOrder(
+      tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce,
+      0, '0x0', '0x0', { from: firstAccount, value: 0 }
+    );
+    // check order volume again
+    const availableSecond = await dexInstance.availableVolume(
+      tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce,
+      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+    );
+    const filledSecond = await dexInstance.amountFilled(
       tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce,
       firstAccount, 0, '0x0', '0x0', { from: firstAccount }
     );
     assert.notEqual(initBalance.toString(), finalBalance.toString());
     assert.equal(depAmount.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());
-    assert.equal(available.toString(), amountGet.toString());
-    assert.equal(filled.toString(), (web3.utils.toBN('0')).toString());
+    assert.equal(availableFirst.toString(), amountGet.toString());
+    assert.equal(filledFirst.toString(), (web3.utils.toBN('0')).toString());
+    assert.equal(availableSecond.toString(), (web3.utils.toBN('0')).toString());
+    assert.equal(filledSecond.toString(), amountGet.toString());
   });
 });
