@@ -14,7 +14,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   let noAdminAccount;
   let instance;
 
-  beforeEach('Assign TokenFunding variables', async () => {
+  beforeEach('Assign ChangeFunctions variables', async () => {
     putativeFeeMake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     putativeFeeTake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     putativeFeeRebate = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
