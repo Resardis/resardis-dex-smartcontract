@@ -13,6 +13,8 @@ contract('TestResardis-TokenFunding', async accounts => {
   let mintAmount;
   let tokenInstance;
   let dexInstance;
+  let dexAddress;
+  let tokenAddress;
 
   beforeEach('Assign TokenFunding variables', async () => {
     initMinter = accounts[0];
@@ -24,6 +26,8 @@ contract('TestResardis-TokenFunding', async accounts => {
     mintAmount = web3.utils.toBN(web3.utils.toWei('500', 'ether'));
     dexInstance = await Resardis.deployed();
     tokenInstance = await erc20.deployed();
+    dexAddress = web3.utils.toChecksumAddress(dexInstance.address);
+    tokenAddress = web3.utils.toChecksumAddress(tokenInstance.address);
   });
 
   it('Try to add a minter account and succeed', async () => {
@@ -47,9 +51,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to deposit Token and succeed', async () => {
-    // should already be checksummed but just in case
-    const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
-    const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
     const initBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
     await tokenInstance.approve(dexAddress, depAmount, { from: depAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: depAccount, value: 0 });
@@ -62,8 +63,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token (overdraft) and fail', async () => {
-    const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
-    const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
@@ -81,8 +80,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token and succeed', async () => {
-    const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
-    const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
