@@ -4,16 +4,29 @@ const Resardis = artifacts.require('Resardis');
 const erc20 = artifacts.require('ERC20Mintable');
 
 contract('TestResardis-TokenFunding', async accounts => {
-  const initMinter = await accounts[0];
-  const depAccount = await accounts[3];
-  const drawAccount = await accounts[4];
-  const depAmount = await '8.44';
-  const normalDraftAmount = await '2.66'; // make this sth smaller than depAmount
-  const overDraftAmount = await '10.55'; // make this sth bigger than depAmount
-  const mintAmount = await '500';
+  let initMinter;
+  let depAccount;
+  let drawAccount;
+  let depAmount;
+  let normalDraftAmount; // make this sth smaller than depAmount
+  let overDraftAmount; // make this sth bigger than depAmount
+  let mintAmount;
+  let tokenInstance;
+  let dexInstance;
+
+  beforeEach('Assign TokenFunding variables', async () => {
+    initMinter = accounts[0];
+    depAccount = accounts[3];
+    drawAccount = accounts[4];
+    depAmount = web3.utils.toBN(web3.utils.toWei('8.44', 'ether'));
+    normalDraftAmount = web3.utils.toBN(web3.utils.toWei('2.66', 'ether')); // make this sth smaller than depAmount
+    overDraftAmount = web3.utils.toBN(web3.utils.toWei('10.55', 'ether')); // make this sth bigger than depAmount
+    mintAmount = web3.utils.toBN(web3.utils.toWei('500', 'ether'));
+    dexInstance = await Resardis.deployed();
+    tokenInstance = await erc20.deployed();
+  });
 
   it('Try to add a minter account and succeed', async () => {
-    const tokenInstance = await erc20.deployed();
     await tokenInstance.addMinter(depAccount, { from: initMinter });
     await tokenInstance.addMinter(drawAccount, { from: initMinter });
     const firstMinter = await tokenInstance.isMinter(depAccount, { from: initMinter });
@@ -24,47 +37,39 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to mint tokens and succeed', async () => {
-    const tokenInstance = await erc20.deployed();
-    const amount = await web3.utils.toBN(web3.utils.toWei(mintAmount, 'ether'));
-    await tokenInstance.mint(depAccount, amount, { from: initMinter, value: 0 });
-    await tokenInstance.mint(drawAccount, amount, { from: initMinter, value: 0 });
+    await tokenInstance.mint(depAccount, mintAmount, { from: initMinter, value: 0 });
+    await tokenInstance.mint(drawAccount, mintAmount, { from: initMinter, value: 0 });
     const finalBalanceFirst = await tokenInstance.balanceOf(depAccount, { from: initMinter });
     const finalBalanceSec = await tokenInstance.balanceOf(drawAccount, { from: initMinter });
 
-    assert.equal(amount.toString(), finalBalanceFirst.toString());
-    assert.equal(amount.toString(), finalBalanceSec.toString());
+    assert.equal(mintAmount.toString(), finalBalanceFirst.toString());
+    assert.equal(mintAmount.toString(), finalBalanceSec.toString());
   });
 
   it('Try to deposit Token and succeed', async () => {
-    const dexInstance = await Resardis.deployed();
-    const tokenInstance = await erc20.deployed();
     // should already be checksummed but just in case
     const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
     const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
-    const amount = await web3.utils.toBN(web3.utils.toWei(depAmount, 'ether'));
     const initBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
-    await tokenInstance.approve(dexAddress, amount, { from: depAccount, value: 0 });
-    await dexInstance.depositToken(tokenAddress, amount, { from: depAccount, value: 0 });
+    await tokenInstance.approve(dexAddress, depAmount, { from: depAccount, value: 0 });
+    await dexInstance.depositToken(tokenAddress, depAmount, { from: depAccount, value: 0 });
     const finalBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
-    const supposedBalance = initBalance.add(amount);
+    const supposedBalance = initBalance.add(depAmount);
 
     assert.notEqual(initBalance.toString(), finalBalance.toString());
-    assert.equal(amount.toString(), finalBalance.toString());
+    assert.equal(depAmount.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());
   });
 
   it('Try to withdraw Token (overdraft) and fail', async () => {
-    const dexInstance = await Resardis.deployed();
-    const tokenInstance = await erc20.deployed();
     const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
     const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
-    const amount = await web3.utils.toBN(web3.utils.toWei(depAmount, 'ether'));
     // deposit some amount first
-    await tokenInstance.approve(dexAddress, amount, { from: drawAccount, value: 0 });
-    await dexInstance.depositToken(tokenAddress, amount, { from: drawAccount, value: 0 });
+    await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
+    await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
     // try to withdraw
     const initBalance = await dexInstance.balanceOf(tokenAddress, drawAccount, { from: drawAccount });
-    const drawAmount = await web3.utils.toBN(web3.utils.toWei(overDraftAmount, 'ether')).add(initBalance);
+    const drawAmount = overDraftAmount.add(initBalance);
     try {
       await dexInstance.withdrawToken(tokenAddress, drawAmount, { from: drawAccount, value: 0 });
     } catch (err) {
@@ -76,19 +81,15 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token and succeed', async () => {
-    const dexInstance = await Resardis.deployed();
-    const tokenInstance = await erc20.deployed();
     const dexAddress = await web3.utils.toChecksumAddress(dexInstance.address);
     const tokenAddress = await web3.utils.toChecksumAddress(tokenInstance.address);
-    const amount = await web3.utils.toBN(web3.utils.toWei(depAmount, 'ether'));
     // deposit some amount first
-    await tokenInstance.approve(dexAddress, amount, { from: drawAccount, value: 0 });
-    await dexInstance.depositToken(tokenAddress, amount, { from: drawAccount, value: 0 });
+    await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
+    await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
     // try to withdraw
     const initBalance = await dexInstance.balanceOf(tokenAddress, drawAccount, { from: drawAccount });
-    const drawAmount = await web3.utils.toBN(web3.utils.toWei(normalDraftAmount, 'ether'));
-    const diffAmount = await initBalance.sub(drawAmount);
-    await dexInstance.withdrawToken(tokenAddress, drawAmount, { from: drawAccount, value: 0 });
+    const diffAmount = initBalance.sub(normalDraftAmount);
+    await dexInstance.withdrawToken(tokenAddress, normalDraftAmount, { from: drawAccount, value: 0 });
     const finalBalance = await dexInstance.balanceOf(tokenAddress, drawAccount, { from: drawAccount });
 
     assert.notEqual(diffAmount.toString(), initBalance.toString());

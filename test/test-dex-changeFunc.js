@@ -3,18 +3,38 @@
 const Resardis = artifacts.require('Resardis');
 
 contract('TestResardis-ChangeFunctions', async accounts => {
+  let putativeFeeMake;
+  let putativeFeeTake;
+  let putativeFeeRebate;
+  let putativeNoFeeUntilEarly;
+  let putativeNoFeeUntilLate;
+  let putativeFeeAccount;
+  let putativeAccLevAddr;
+  let putativeAdmin;
+  let noAdminAccount;
+  let instance;
+
+  beforeEach('Assign TokenFunding variables', async () => {
+    putativeFeeMake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
+    putativeFeeTake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
+    putativeFeeRebate = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
+    putativeNoFeeUntilEarly = web3.utils.toBN(788918400); // 1995/01/01
+    putativeNoFeeUntilLate = web3.utils.toBN(4102444800); // 2100/01/01
+    putativeFeeAccount = accounts[2];
+    putativeAccLevAddr = accounts[3];
+    putativeAdmin = accounts[4];
+    noAdminAccount = accounts[5];
+    instance = await Resardis.deployed();
+  });
+
   it('Try to change the maker, taker and rebate fees and fail', async () => {
-    const instance = await Resardis.deployed();
     const oldFeeMake = await instance.feeMake.call();
     const oldFeeTake = await instance.feeTake.call();
     const oldFeeRebate = await instance.feeRebate.call();
-    const putativeFeeMake = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
-    const putativeFeeTake = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
-    const putativeFeeRebate = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     try {
-      await instance.changeFeeMake(putativeFeeMake, { from: accounts[7] });
-      await instance.changeFeeTake(putativeFeeTake, { from: accounts[7] });
-      await instance.changeFeeRebate(putativeFeeRebate, { from: accounts[7] });
+      await instance.changeFeeMake(putativeFeeMake, { from: noAdminAccount });
+      await instance.changeFeeTake(putativeFeeTake, { from: noAdminAccount });
+      await instance.changeFeeRebate(putativeFeeRebate, { from: noAdminAccount });
     } catch (err) {
       console.log('Maker, taker and rebate fees could not have been changed with the given msg.sender as expected.');
     }
@@ -29,14 +49,10 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the maker, taker and rebate fees and succeed', async () => {
-    const instance = await Resardis.deployed();
     const currentAdmin = await instance.admin.call();
     const oldFeeMake = await instance.feeMake.call();
     const oldFeeTake = await instance.feeTake.call();
     const oldFeeRebate = await instance.feeRebate.call();
-    const putativeFeeMake = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
-    const putativeFeeTake = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
-    const putativeFeeRebate = await web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     try {
       await instance.changeFeeMake(putativeFeeMake, { from: currentAdmin });
       await instance.changeFeeTake(putativeFeeTake, { from: currentAdmin });
@@ -58,21 +74,18 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the no-fee period and fail', async () => {
-    const instance = await Resardis.deployed();
     const currentAdmin = await instance.admin.call();
     const oldNoFeeUntil = await instance.noFeeUntil.call();
-    const putativeNoFeeUntilFirst = await web3.utils.toBN(788918400); // 1995/01/01
-    const putativeNoFeeUntilSec = await web3.utils.toBN(4102444800); // 2100/01/01
     try {
       // the input date is not allowed, but sending from admin
-      await instance.changeNoFeeUntil(putativeNoFeeUntilFirst, { from: currentAdmin });
+      await instance.changeNoFeeUntil(putativeNoFeeUntilEarly, { from: currentAdmin });
     } catch (err) {
       console.log('The given no-fee-until date is not allowed as expected.');
     }
     const newNoFeeUntilFirst = await instance.noFeeUntil.call();
     try {
       // the input date is allowed but not sending from admin
-      await instance.changeNoFeeUntil(putativeNoFeeUntilSec, { from: accounts[6] });
+      await instance.changeNoFeeUntil(putativeNoFeeUntilLate, { from: noAdminAccount });
     } catch (err) {
       console.log('The given msg.sender is not allowed to change no-fee-until date as expected. ');
     }
@@ -82,27 +95,23 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the no-fee period and succeed', async () => {
-    const instance = await Resardis.deployed();
     const currentAdmin = await instance.admin.call();
     const oldNoFeeUntil = await instance.noFeeUntil.call();
-    const putativeNoFeeUntil = await web3.utils.toBN(4102444800); // 2100/01/01
     try {
-      // date is not allowed, but sending from admin
-      await instance.changeNoFeeUntil(putativeNoFeeUntil, { from: currentAdmin });
+      // date is allowed, and sending from admin
+      await instance.changeNoFeeUntil(putativeNoFeeUntilLate, { from: currentAdmin });
     } catch (err) {
       console.log('Eror while changing no-fee-until date.');
     }
     const newNoFeeUntil = await instance.noFeeUntil.call();
     assert.notEqual(oldNoFeeUntil.toString(), newNoFeeUntil.toString());
-    assert.equal(putativeNoFeeUntil.toString(), newNoFeeUntil.toString());
+    assert.equal(putativeNoFeeUntilLate.toString(), newNoFeeUntil.toString());
   });
 
   it('Try to change the fee account and fail', async () => {
-    const instance = await Resardis.deployed();
     const oldFeeAccount = await instance.feeAccount.call();
-    const putativeFeeAccount = await accounts[2];
     try {
-      await instance.changeFeeAccount(putativeFeeAccount, { from: accounts[8] });
+      await instance.changeFeeAccount(putativeFeeAccount, { from: noAdminAccount });
     } catch (err) {
       console.log('The fee account could not have been changed with the given msg.sender as expected.');
     }
@@ -111,10 +120,8 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the fee account and succeed', async () => {
-    const instance = await Resardis.deployed();
     const currentAdmin = await instance.admin.call();
     const oldFeeAccount = await instance.feeAccount.call();
-    const putativeFeeAccount = await accounts[2];
     try {
       await instance.changeFeeAccount(putativeFeeAccount, { from: currentAdmin });
     } catch (err) {
@@ -126,11 +133,9 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the account levels address and fail', async () => {
-    const instance = await Resardis.deployed();
     const oldAccLevAddr = await instance.accountLevelsAddr.call();
-    const putativeAccLevAddr = await accounts[5];
     try {
-      await instance.changeAccountLevelsAddr(putativeAccLevAddr, { from: accounts[6] });
+      await instance.changeAccountLevelsAddr(putativeAccLevAddr, { from: noAdminAccount });
     } catch (err) {
       console.log('Account levels address could not have been changed with the given msg.sender as expected.');
     }
@@ -139,10 +144,8 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the account levels address and succeed', async () => {
-    const instance = await Resardis.deployed();
     const currentAdmin = await instance.admin.call();
     const oldAccLevAddr = await instance.accountLevelsAddr.call();
-    const putativeAccLevAddr = await accounts[5];
     try {
       await instance.changeAccountLevelsAddr(putativeAccLevAddr, { from: currentAdmin });
     } catch (err) {
@@ -154,9 +157,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the admin account and fail', async () => {
-    const instance = await Resardis.deployed();
     const oldAdmin = await instance.admin.call();
-    const putativeAdmin = await accounts[2];
     try {
       await instance.changeAdmin(putativeAdmin, { from: putativeAdmin });
     } catch (err) {
@@ -167,9 +168,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the admin account and succeed', async () => {
-    const instance = await Resardis.deployed();
     const oldAdmin = await instance.admin.call();
-    const putativeAdmin = await accounts[2];
     try {
       await instance.changeAdmin(putativeAdmin, { from: oldAdmin });
     } catch (err) {
