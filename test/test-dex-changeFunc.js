@@ -132,30 +132,6 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     assert.equal(putativeFeeAccount, newFeeAccount);
   });
 
-  it('Try to change the account levels address and fail', async () => {
-    const oldAccLevAddr = await instance.accountLevelsAddr.call();
-    try {
-      await instance.changeAccountLevelsAddr(putativeAccLevAddr, { from: noAdminAccount });
-    } catch (err) {
-      console.log('Account levels address could not have been changed with the given msg.sender as expected.');
-    }
-    const newAccLevAddr = await instance.accountLevelsAddr.call();
-    assert.equal(oldAccLevAddr, newAccLevAddr);
-  });
-
-  it('Try to change the account levels address and succeed', async () => {
-    const currentAdmin = await instance.admin.call();
-    const oldAccLevAddr = await instance.accountLevelsAddr.call();
-    try {
-      await instance.changeAccountLevelsAddr(putativeAccLevAddr, { from: currentAdmin });
-    } catch (err) {
-      console.log('Error while changing the account levels address.');
-    }
-    const newAccLevAddr = await instance.accountLevelsAddr.call();
-    assert.notEqual(oldAccLevAddr, newAccLevAddr);
-    assert.equal(putativeAccLevAddr, newAccLevAddr);
-  });
-
   it('Try to change the admin account and fail', async () => {
     const oldAdmin = await instance.admin.call();
     try {

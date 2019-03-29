@@ -2,14 +2,12 @@ pragma solidity ^0.5.0;
 
 import "./safemath.sol";
 import "./token.sol";
-import "./level.sol";
 
 contract Resardis {
   using SafeMath for uint256;
 
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
-  address public accountLevelsAddr; //the address of the AccountLevels contract
   uint public feeMake; //percentage times (1 ether)
   uint public feeTake; //percentage times (1 ether)
   uint public feeRebate; //percentage times (1 ether)
@@ -24,10 +22,9 @@ contract Resardis {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_, uint noFeeUntil_) public {
+  constructor(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint feeRebate_, uint noFeeUntil_) public {
     admin = admin_;
     feeAccount = feeAccount_;
-    accountLevelsAddr = accountLevelsAddr_;
     feeMake = feeMake_;
     feeTake = feeTake_;
     feeRebate = feeRebate_;
@@ -41,11 +38,6 @@ contract Resardis {
   function changeAdmin(address admin_) public {
     require(msg.sender == admin);
     admin = admin_;
-  }
-
-  function changeAccountLevelsAddr(address accountLevelsAddr_) public {
-    require(msg.sender == admin);
-    accountLevelsAddr = accountLevelsAddr_;
   }
 
   function changeFeeAccount(address feeAccount_) public {
@@ -138,11 +130,6 @@ contract Resardis {
       feeTakeXfer = amount.mul(feeTake) / (1 ether);
     }
 
-    if (accountLevelsAddr != address(0x0)) {
-      uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
-      if (accountLevel==1) feeRebateXfer = amount.mul(feeRebate) / (1 ether);
-      if (accountLevel==2) feeRebateXfer = feeTakeXfer;
-    }
     tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
     tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.add(feeRebateXfer).sub(feeMakeXfer));
     tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer).sub(feeRebateXfer));
