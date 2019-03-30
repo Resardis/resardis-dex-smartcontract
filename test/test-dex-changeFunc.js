@@ -39,6 +39,9 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     const newFeeRebate = await instance.feeRebate.call();
     // Do not compare BN/BigNumber objects
     // Instead, compare the string versions
+    assert.notEqual(putativeFeeMake.toString(), newFeeMake.toString());
+    assert.notEqual(putativeFeeTake.toString(), newFeeTake.toString());
+    assert.notEqual(putativeFeeRebate.toString(), newFeeRebate.toString());
     assert.equal(oldFeeMake.toString(), newFeeMake.toString());
     assert.equal(oldFeeTake.toString(), newFeeTake.toString());
     assert.equal(oldFeeRebate.toString(), newFeeRebate.toString());
@@ -78,6 +81,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('The given msg.sender is not allowed to change no-fee-until date as expected. ');
     }
     const newNoFeeUntil = await instance.noFeeUntil.call();
+    assert.notEqual(putativeNoFeeUntilLate.toString(), newNoFeeUntil.toString());
     assert.equal(oldNoFeeUntil.toString(), newNoFeeUntil.toString());
   });
 
@@ -103,6 +107,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('The fee account could not have been changed with the given msg.sender as expected.');
     }
     const newFeeAccount = await instance.feeAccount.call();
+    assert.notEqual(putativeFeeAccount, newFeeAccount);
     assert.equal(oldFeeAccount, newFeeAccount);
   });
 
@@ -127,6 +132,7 @@ contract('TestResardis-ChangeFunctions', async accounts => {
       console.log('The admin account could not have been changed with the given msg.sender as expected.');
     }
     const newAdmin = await instance.admin.call();
+    assert.notEqual(putativeAdmin, newAdmin);
     assert.equal(oldAdmin, newAdmin);
   });
 
