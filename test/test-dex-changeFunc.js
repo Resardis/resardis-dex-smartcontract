@@ -9,7 +9,6 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   let putativeNoFeeUntilEarly;
   let putativeNoFeeUntilLate;
   let putativeFeeAccount;
-  let putativeAccLevAddr;
   let putativeAdmin;
   let noAdminAccount;
   let instance;
@@ -21,7 +20,6 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     putativeNoFeeUntilEarly = web3.utils.toBN(788918400); // 1995/01/01
     putativeNoFeeUntilLate = web3.utils.toBN(4102444800); // 2100/01/01
     putativeFeeAccount = accounts[2];
-    putativeAccLevAddr = accounts[3];
     putativeAdmin = accounts[4];
     noAdminAccount = accounts[5];
     instance = await Resardis.deployed();
