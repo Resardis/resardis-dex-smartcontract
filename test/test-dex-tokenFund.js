@@ -58,7 +58,6 @@ contract('TestResardis-TokenFunding', async accounts => {
     const supposedBalance = initBalance.add(depAmount);
 
     assert.notEqual(initBalance.toString(), finalBalance.toString());
-    assert.equal(depAmount.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());
   });
 
