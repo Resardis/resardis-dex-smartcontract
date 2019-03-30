@@ -65,7 +65,6 @@ contract Resardis {
 
   function changeNoFeeUntil(uint noFeeUntil_) public {
     require(msg.sender == admin);
-    require(now < noFeeUntil_);
     noFeeUntil = noFeeUntil_;
   }
 
