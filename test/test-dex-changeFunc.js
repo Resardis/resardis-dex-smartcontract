@@ -6,7 +6,6 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   let putativeFeeMake;
   let putativeFeeTake;
   let putativeFeeRebate;
-  let putativeNoFeeUntilEarly;
   let putativeNoFeeUntilLate;
   let putativeFeeAccount;
   let putativeAdmin;
@@ -17,7 +16,6 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     putativeFeeMake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     putativeFeeTake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     putativeFeeRebate = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
-    putativeNoFeeUntilEarly = web3.utils.toBN(788918400); // 1995/01/01
     putativeNoFeeUntilLate = web3.utils.toBN(4102444800); // 2100/01/01
     putativeFeeAccount = accounts[2];
     putativeAdmin = accounts[4];
@@ -72,24 +70,15 @@ contract('TestResardis-ChangeFunctions', async accounts => {
   });
 
   it('Try to change the no-fee period and fail', async () => {
-    const currentAdmin = await instance.admin.call();
     const oldNoFeeUntil = await instance.noFeeUntil.call();
-    try {
-      // the input date is not allowed, but sending from admin
-      await instance.changeNoFeeUntil(putativeNoFeeUntilEarly, { from: currentAdmin });
-    } catch (err) {
-      console.log('The given no-fee-until date is not allowed as expected.');
-    }
-    const newNoFeeUntilFirst = await instance.noFeeUntil.call();
     try {
       // the input date is allowed but not sending from admin
       await instance.changeNoFeeUntil(putativeNoFeeUntilLate, { from: noAdminAccount });
     } catch (err) {
       console.log('The given msg.sender is not allowed to change no-fee-until date as expected. ');
     }
-    const newNoFeeUntilSec = await instance.noFeeUntil.call();
-    assert.equal(oldNoFeeUntil.toString(), newNoFeeUntilFirst.toString());
-    assert.equal(oldNoFeeUntil.toString(), newNoFeeUntilSec.toString());
+    const newNoFeeUntil = await instance.noFeeUntil.call();
+    assert.equal(oldNoFeeUntil.toString(), newNoFeeUntil.toString());
   });
 
   it('Try to change the no-fee period and succeed', async () => {
