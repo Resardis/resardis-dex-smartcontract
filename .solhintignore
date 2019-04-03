@@ -1,0 +1,9 @@
+build/
+node_modules/
+.git/
+*.js
+*.json
+*.lock
+*.md
+*.sh
+*.txt

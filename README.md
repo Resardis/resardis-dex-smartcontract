@@ -33,3 +33,12 @@ yarn install
 + Locally installed binaries can be called using `yarn commandName` while in the project folder if you don't want to tweak `PATH`.
 
 Also see [Yarn Workflow](https://yarnpkg.com/en/docs/yarn-workflow).
+
+### Deploying and Testing
+```shell
+cd <projectDir>
+yarn solhint "contracts/**/*.sol"  # Linting Solidity files
+yarn eslint .  # Linting JavaScript files, checking-only
+yarn eslint --fix .  # Auto-fix
+bash scripts/test.sh --network development  # Testing
+```
