@@ -153,9 +153,7 @@ contract Resardis {
       tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer));
       tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
       tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
-    }
-
-    if (feeOption[user] == true && feeOption[msg.sender] == true) {
+    } else if (feeOption[user] == true && feeOption[msg.sender] == true) {
       tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
       tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
       tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
@@ -163,9 +161,7 @@ contract Resardis {
       tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer).add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
       tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
       tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
-    }
-
-    if (feeOption[user] == false && feeOption[msg.sender] == true) {
+    } else if (feeOption[user] == false && feeOption[msg.sender] == true) {
       tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
       tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
       tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
@@ -173,9 +169,7 @@ contract Resardis {
       tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer);
       tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
       tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
-    }
-
-    if (feeOption[user] == true && feeOption[msg.sender] == false) {
+    } else if (feeOption[user] == true && feeOption[msg.sender] == false) {
       tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
       tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
       tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
