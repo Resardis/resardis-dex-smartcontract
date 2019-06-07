@@ -11,7 +11,7 @@ contract Resardis {
   uint public feeMake; //percentage times (1 ether)
   uint public feeTake; //percentage times (1 ether)
   uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
-  uint public getResardisTokenFee;
+  uint public resardisTokenFee;
   mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
@@ -25,11 +25,12 @@ contract Resardis {
   event Withdraw(address token, address user, uint amount, uint balance);
   event userChangeFeeOption (address user, bool userfeeOption);
 
-  constructor(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint noFeeUntil_) public {
+  constructor(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint resardisTokenFee_, uint noFeeUntil_) public {
     admin = admin_;
     feeAccount = feeAccount_;
     feeMake = feeMake_;
     feeTake = feeTake_;
+    resardisTokenFee = resardisTokenFee_;
     noFeeUntil = noFeeUntil_;
   }
 
@@ -81,7 +82,7 @@ contract Resardis {
 
   function changeResardisTokenFee(uint fee_) public {
     require(msg.sender == admin);
-    getResardisTokenFee = fee_;
+    resardisTokenFee = fee_;
   }
 
   function deposit() public payable {
@@ -138,12 +139,12 @@ contract Resardis {
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
     uint feeMakeXfer = 0;
     uint feeTakeXfer = 0;
-    uint resardisTokenFee = 0;
+    uint resardisTokenFeeXfer = 0;
 
     if (now >= noFeeUntil) {
       feeMakeXfer = amount.mul(feeMake) / (1 ether);
       feeTakeXfer = amount.mul(feeTake) / (1 ether);
-      resardisTokenFee = getResardisTokenFee;
+      resardisTokenFeeXfer = resardisTokenFee;
     }
 
      if (feeOption[user] == false && feeOption[msg.sender] == false) {
@@ -156,18 +157,18 @@ contract Resardis {
 
     if (feeOption[user]== true && feeOption[msg.sender] == true) {
     	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
-        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFee); //depends on resardis token price. (a new solution will be designed.)
+        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
         tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
-        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFee);
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFee).add(resardisTokenFee);//depends on resardis token price. (a new solution will be designed.)
+        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer).add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
         tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
     	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
   }
     if (feeOption[user]== false && feeOption[msg.sender] == true) {
     	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
-        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFee); //depends on resardis token price. (a new solution will be designed.)
+        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
         tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFee);//depends on resardis token price. (a new solution will be designed.)
+    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
     	tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer);
     	tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
     	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
@@ -175,8 +176,8 @@ contract Resardis {
     if (feeOption[user]== true && feeOption[msg.sender] == false) {
     	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
         tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
-        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFee);
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFee);//depends on resardis token price. (a new solution will be designed.)
+        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
     	tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeTakeXfer);
     	tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
     	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
