@@ -1,63 +1,81 @@
 'use strict';
 
 const Resardis = artifacts.require('Resardis');
+const resToken = artifacts.require('ERC20Mintable2');
 
 contract('TestResardis-ChangeFunctions', async accounts => {
   let putativeFeeMake;
   let putativeFeeTake;
+  let putativeFeeResToken;
   let putativeNoFeeUntilLate;
   let putativeFeeAccount;
   let putativeAdmin;
   let noAdminAccount;
   let instance;
+  let resTokenInstance;
+  let resTokenAddress;
 
   beforeEach('Assign ChangeFunctions variables', async () => {
     putativeFeeMake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
     putativeFeeTake = web3.utils.toBN(web3.utils.toWei('0.001', 'ether'));
+    putativeFeeResToken = web3.utils.toBN(web3.utils.toWei('0.079', 'ether'));
     putativeNoFeeUntilLate = web3.utils.toBN(4102444800); // 2100/01/01
     putativeFeeAccount = accounts[2];
     putativeAdmin = accounts[4];
     noAdminAccount = accounts[5];
     instance = await Resardis.deployed();
+    resTokenInstance = await resToken.deployed();
+    resTokenAddress = web3.utils.toChecksumAddress(resTokenInstance.address);
   });
 
-  it('Try to change the maker, taker and rebate fees and fail', async () => {
+  it('Try to change the maker, taker and resardis token fees and fail', async () => {
     const oldFeeMake = await instance.feeMake.call();
     const oldFeeTake = await instance.feeTake.call();
+    const oldFeeResToken = await instance.resardisTokenFee.call();
     try {
       await instance.changeFeeMake(putativeFeeMake, { from: noAdminAccount });
       await instance.changeFeeTake(putativeFeeTake, { from: noAdminAccount });
+      await instance.changeResardisTokenFee(putativeFeeResToken, { from: noAdminAccount });
     } catch (err) {
-      console.log('Maker, taker and rebate fees could not have been changed with the given msg.sender as expected.');
+      console.log('Maker, taker and res. token fees could not have been changed with this msg.sender as expected.');
     }
     const newFeeMake = await instance.feeMake.call();
     const newFeeTake = await instance.feeTake.call();
+    const newFeeResToken = await instance.resardisTokenFee.call();
     // Do not compare BN/BigNumber objects
     // Instead, compare the string versions
     assert.notEqual(putativeFeeMake.toString(), newFeeMake.toString());
     assert.notEqual(putativeFeeTake.toString(), newFeeTake.toString());
+    assert.notEqual(putativeFeeResToken.toString(), newFeeResToken.toString());
     assert.equal(oldFeeMake.toString(), newFeeMake.toString());
     assert.equal(oldFeeTake.toString(), newFeeTake.toString());
+    assert.equal(oldFeeResToken.toString(), newFeeResToken.toString());
   });
 
-  it('Try to change the maker, taker and rebate fees and succeed', async () => {
+  it('Try to change the maker, taker and resardis token fees and succeed', async () => {
     const currentAdmin = await instance.admin.call();
     const oldFeeMake = await instance.feeMake.call();
     const oldFeeTake = await instance.feeTake.call();
+    const oldFeeResToken = await instance.resardisTokenFee.call();
     try {
       await instance.changeFeeMake(putativeFeeMake, { from: currentAdmin });
       await instance.changeFeeTake(putativeFeeTake, { from: currentAdmin });
+      await instance.changeResardisTokenFee(putativeFeeResToken, { from: currentAdmin });
     } catch (err) {
-      console.log('Error while changing the maker, taker and rebate fees.');
+      console.log('Error while changing the maker, taker and resardis token fees.');
     }
     const newFeeMake = await instance.feeMake.call();
     const newFeeTake = await instance.feeTake.call();
+    const newFeeResToken = await instance.resardisTokenFee.call();
+
     // Do not compare BN/BigNumber objects
     // Instead, compare the string versions
     assert.notEqual(oldFeeMake.toString(), newFeeMake.toString());
     assert.notEqual(oldFeeTake.toString(), newFeeTake.toString());
+    assert.notEqual(oldFeeResToken.toString(), newFeeResToken.toString());
     assert.equal(putativeFeeMake.toString(), newFeeMake.toString());
     assert.equal(putativeFeeTake.toString(), newFeeTake.toString());
+    assert.equal(putativeFeeResToken.toString(), newFeeResToken.toString());
   });
 
   it('Try to change the no-fee period and fail', async () => {
@@ -133,5 +151,58 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     }
     const newAdmin = await instance.admin.call();
     assert.equal(putativeAdmin, newAdmin);
+  });
+
+  it('Try to change the Resardis token address and fail', async () => {
+    const oldAdress = await instance.resardisToken.call();
+    try {
+      await instance.setResardisTokenAddress(resTokenAddress, { from: noAdminAccount });
+    } catch (err) {
+      console.log('The Resardis token address could not have been changed with the given msg.sender as expected.');
+    }
+    const newAdress = await instance.resardisToken.call();
+    assert.notEqual(resTokenAddress, newAdress);
+    assert.equal(oldAdress, newAdress);
+  });
+
+  it('Try to change the Resardis token address and succeed', async () => {
+    const currentAdmin = await instance.admin.call();
+    const oldAdress = await instance.resardisToken.call();
+    try {
+      await instance.setResardisTokenAddress(resTokenAddress, { from: currentAdmin });
+    } catch (err) {
+      console.log('Error while changing the Resardis token address.');
+    }
+    const newAdress = await instance.resardisToken.call();
+    assert.notEqual(oldAdress, newAdress);
+    assert.notEqual(oldAdress, resTokenAddress);
+    assert.equal(resTokenAddress, newAdress);
+  });
+
+  it('Try to change the fee option and fail', async () => {
+    const currentAdmin = await instance.admin.call();
+    const oldFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    try {
+      await instance.feeOptionSet(noAdminAccount, true, { from: currentAdmin });
+    } catch (err) {
+      console.log('The fee option could not have been changed with the given msg.sender as expected.');
+    }
+    const newFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    assert.isFalse(oldFeeOption);
+    assert.isFalse(newFeeOption);
+    assert.equal(oldFeeOption, newFeeOption);
+  });
+
+  it('Try to change the fee option and succeed', async () => {
+    const oldFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    try {
+      await instance.feeOptionSet(noAdminAccount, true, { from: noAdminAccount });
+    } catch (err) {
+      console.log('Error while changing the fee option.');
+    }
+    const newFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    assert.isFalse(oldFeeOption);
+    assert.isTrue(newFeeOption);
+    assert.notEqual(oldFeeOption, newFeeOption);
   });
 });
