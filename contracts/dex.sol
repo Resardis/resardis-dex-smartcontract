@@ -65,11 +65,11 @@ contract Resardis {
     noFeeUntil = noFeeUntil_;
   }
 
-  function feeOptionAccount(address user_) public view returns(bool) {
+  function getFeeOption(address user_) public view returns(bool) {
     return feeOption[user_];
   }
 
-  function feeOptionSet(address user_, bool level_) public {
+  function changeFeeOption(address user_, bool level_) public {
     require(msg.sender == user_);
     feeOption[user_] = level_;
     emit userChangeFeeOption(msg.sender, feeOption[msg.sender]);

@@ -203,8 +203,8 @@ contract('TestResardis-Trading', async accounts => {
   });
 
   it('Place an order, do trading, and succeed. Zero-fee. No fee option set.', async () => {
-    const initFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const initSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
+    const initFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const initSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
 
     const out = await tradeFlow('2');
     console.log('===== FEE ACCOUNT INFO =====');
@@ -282,8 +282,8 @@ contract('TestResardis-Trading', async accounts => {
     feeTake = (feeTake.mul(tradeAmount)).div(unit);
     const totalFee = feeMake.add(feeTake);
 
-    const initFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const initSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
+    const initFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const initSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
 
     // trade
     const out = await tradeFlow('3');
@@ -368,12 +368,12 @@ contract('TestResardis-Trading', async accounts => {
     feeTake = (feeTake.mul(tradeAmount)).div(unit);
     const resTokenFee = await dexInstance.resardisTokenFee.call();
     // users change their Options
-    const initFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const initSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
-    await dexInstance.feeOptionSet(firstAccount, true, { from: firstAccount });
-    await dexInstance.feeOptionSet(secAccount, false, { from: secAccount });
-    const finalFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const finalSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
+    const initFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const initSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
+    await dexInstance.changeFeeOption(firstAccount, true, { from: firstAccount });
+    await dexInstance.changeFeeOption(secAccount, false, { from: secAccount });
+    const finalFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const finalSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
 
     // trade
     const out = await tradeFlow('4');
@@ -469,12 +469,12 @@ contract('TestResardis-Trading', async accounts => {
     feeTake = (feeTake.mul(tradeAmount)).div(unit);
     const resTokenFee = await dexInstance.resardisTokenFee.call();
     // users change their Options
-    const initFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const initSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
-    await dexInstance.feeOptionSet(firstAccount, false, { from: firstAccount });
-    await dexInstance.feeOptionSet(secAccount, true, { from: secAccount });
-    const finalFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const finalSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
+    const initFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const initSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
+    await dexInstance.changeFeeOption(firstAccount, false, { from: firstAccount });
+    await dexInstance.changeFeeOption(secAccount, true, { from: secAccount });
+    const finalFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const finalSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
 
     // trade
     const out = await tradeFlow('5');
@@ -568,12 +568,12 @@ contract('TestResardis-Trading', async accounts => {
     const resTokenFee = await dexInstance.resardisTokenFee.call();
     const doubleResTokenFee = resTokenFee.add(resTokenFee);
     // users change their Options
-    const initFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const initSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
-    await dexInstance.feeOptionSet(firstAccount, true, { from: firstAccount });
-    await dexInstance.feeOptionSet(secAccount, true, { from: secAccount });
-    const finalFirstAccountFeeOption = await dexInstance.feeOptionAccount(firstAccount, { from: firstAccount });
-    const finalSecAccountFeeOption = await dexInstance.feeOptionAccount(secAccount, { from: secAccount });
+    const initFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const initSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
+    await dexInstance.changeFeeOption(firstAccount, true, { from: firstAccount });
+    await dexInstance.changeFeeOption(secAccount, true, { from: secAccount });
+    const finalFirstAccountFeeOption = await dexInstance.getFeeOption(firstAccount, { from: firstAccount });
+    const finalSecAccountFeeOption = await dexInstance.getFeeOption(secAccount, { from: secAccount });
 
     // trade
     const out = await tradeFlow('6');

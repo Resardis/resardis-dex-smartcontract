@@ -181,26 +181,26 @@ contract('TestResardis-ChangeFunctions', async accounts => {
 
   it('Try to change the fee option and fail', async () => {
     const currentAdmin = await instance.admin.call();
-    const oldFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    const oldFeeOption = await instance.getFeeOption(noAdminAccount, { from: noAdminAccount });
     try {
-      await instance.feeOptionSet(noAdminAccount, true, { from: currentAdmin });
+      await instance.changeFeeOption(noAdminAccount, true, { from: currentAdmin });
     } catch (err) {
       console.log('The fee option could not have been changed with the given msg.sender as expected.');
     }
-    const newFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    const newFeeOption = await instance.getFeeOption(noAdminAccount, { from: noAdminAccount });
     assert.isFalse(oldFeeOption);
     assert.isFalse(newFeeOption);
     assert.equal(oldFeeOption, newFeeOption);
   });
 
   it('Try to change the fee option and succeed', async () => {
-    const oldFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    const oldFeeOption = await instance.getFeeOption(noAdminAccount, { from: noAdminAccount });
     try {
-      await instance.feeOptionSet(noAdminAccount, true, { from: noAdminAccount });
+      await instance.changeFeeOption(noAdminAccount, true, { from: noAdminAccount });
     } catch (err) {
       console.log('Error while changing the fee option.');
     }
-    const newFeeOption = await instance.feeOptionAccount(noAdminAccount, { from: noAdminAccount });
+    const newFeeOption = await instance.getFeeOption(noAdminAccount, { from: noAdminAccount });
     assert.isFalse(oldFeeOption);
     assert.isTrue(newFeeOption);
     assert.notEqual(oldFeeOption, newFeeOption);
