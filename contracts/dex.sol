@@ -8,6 +8,7 @@ contract Resardis {
 
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
+  address public resardisToken;
   uint public feeMake; //percentage times (1 ether)
   uint public feeTake; //percentage times (1 ether)
   uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
@@ -16,7 +17,6 @@ contract Resardis {
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
   mapping (address => bool) public feeOption; //mapping of user accounts to mapping of fee payment option, 0 = user pays ether as a fee, 1 = user pays resardiscoin as a fee. User have an option to change this level anytime.
-  address public resardisToken;
 
   event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
   event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
@@ -76,8 +76,8 @@ contract Resardis {
   }
 
   function setResardisTokenAddress(address tokenaddress_) public {
-	require(msg.sender == admin);
-	resardisToken = tokenaddress_;
+    require(msg.sender == admin);
+    resardisToken = tokenaddress_;
   }
 
   function changeResardisTokenFee(uint fee_) public {
@@ -147,42 +147,45 @@ contract Resardis {
       resardisTokenFeeXfer = resardisTokenFee;
     }
 
-     if (feeOption[user] == false && feeOption[msg.sender] == false) {
-    	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
-    	tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
-    	tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer));
-    	tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
-    	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    if (feeOption[user] == false && feeOption[msg.sender] == false) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer));
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    }
+
+    if (feeOption[user] == true && feeOption[msg.sender] == true) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
+      tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
+      tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer).add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    }
+
+    if (feeOption[user] == false && feeOption[msg.sender] == true) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
+      tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer);
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
+    }
+
+    if (feeOption[user] == true && feeOption[msg.sender] == false) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
+      tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeTakeXfer);
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
+    }
   }
 
-    if (feeOption[user]== true && feeOption[msg.sender] == true) {
-    	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
-        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
-        tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
-        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer).add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
-        tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
-    	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
-  }
-    if (feeOption[user]== false && feeOption[msg.sender] == true) {
-    	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
-        tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
-        tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
-    	tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer);
-    	tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
-    	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
-  }
-    if (feeOption[user]== true && feeOption[msg.sender] == false) {
-    	tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
-        tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
-        tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
-    	tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
-    	tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeTakeXfer);
-    	tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
-    	tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
-  }
-  }
   function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public view returns(bool) {
     if (!(
       tokens[tokenGet][sender] >= amount &&
