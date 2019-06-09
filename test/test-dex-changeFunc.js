@@ -205,4 +205,50 @@ contract('TestResardis-ChangeFunctions', async accounts => {
     assert.isTrue(newFeeOption);
     assert.notEqual(oldFeeOption, newFeeOption);
   });
+
+  it('Try to change the allowed deposit token and fail', async () => {
+    const oldTokenPermission = await instance.getAllowedDepositToken(resTokenAddress, { from: noAdminAccount });
+    try {
+      await instance.changeAllowedToken(resTokenAddress, true, false, { from: noAdminAccount });
+    } catch (err) {
+      console.log('The allowed deposit token could not have been changed with the given msg.sender as expected.');
+    }
+    const newTokenPermission = await instance.getAllowedDepositToken(resTokenAddress, { from: noAdminAccount });
+    assert.isFalse(oldTokenPermission);
+    assert.isFalse(newTokenPermission);
+    assert.equal(oldTokenPermission, newTokenPermission);
+  });
+
+  it('Try to change the allowed deposit token and succeed', async () => {
+    const currentAdmin = await instance.admin.call();
+    const oldTokenPermission = await instance.getAllowedDepositToken(resTokenAddress, { from: currentAdmin });
+    await instance.changeAllowedToken(resTokenAddress, true, false, { from: currentAdmin });
+    const newTokenPermission = await instance.getAllowedDepositToken(resTokenAddress, { from: currentAdmin });
+    assert.isFalse(oldTokenPermission);
+    assert.isTrue(newTokenPermission);
+    assert.notEqual(oldTokenPermission, newTokenPermission);
+  });
+
+  it('Try to change the allowed withdraw token and fail', async () => {
+    const oldTokenPermission = await instance.getAllowedWithdrawToken(resTokenAddress, { from: noAdminAccount });
+    try {
+      await instance.changeAllowedToken(resTokenAddress, true, true, { from: noAdminAccount });
+    } catch (err) {
+      console.log('The allowed withdraw token could not have been changed with the given msg.sender as expected.');
+    }
+    const newTokenPermission = await instance.getAllowedWithdrawToken(resTokenAddress, { from: noAdminAccount });
+    assert.isFalse(oldTokenPermission);
+    assert.isFalse(newTokenPermission);
+    assert.equal(oldTokenPermission, newTokenPermission);
+  });
+
+  it('Try to change the allowed withdraw token and succeed', async () => {
+    const currentAdmin = await instance.admin.call();
+    const oldTokenPermission = await instance.getAllowedWithdrawToken(resTokenAddress, { from: currentAdmin });
+    await instance.changeAllowedToken(resTokenAddress, true, true, { from: currentAdmin });
+    const newTokenPermission = await instance.getAllowedWithdrawToken(resTokenAddress, { from: currentAdmin });
+    assert.isFalse(oldTokenPermission);
+    assert.isTrue(newTokenPermission);
+    assert.notEqual(oldTokenPermission, newTokenPermission);
+  });
 });
