@@ -8,26 +8,29 @@ contract Resardis {
 
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
+  address public resardisToken;
   uint public feeMake; //percentage times (1 ether)
   uint public feeTake; //percentage times (1 ether)
-  uint public feeRebate; //percentage times (1 ether)
   uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
+  uint public resardisTokenFee;
   mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
+  mapping (address => bool) public feeOption; //mapping of user accounts to mapping of fee payment option, 0 = user pays ether as a fee, 1 = user pays resardiscoin as a fee. User have an option to change this level anytime.
 
   event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
   event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
   event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
+  event userChangeFeeOption (address user, bool userfeeOption);
 
-  constructor(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint feeRebate_, uint noFeeUntil_) public {
+  constructor(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint resardisTokenFee_, uint noFeeUntil_) public {
     admin = admin_;
     feeAccount = feeAccount_;
     feeMake = feeMake_;
     feeTake = feeTake_;
-    feeRebate = feeRebate_;
+    resardisTokenFee = resardisTokenFee_;
     noFeeUntil = noFeeUntil_;
   }
 
@@ -53,19 +56,33 @@ contract Resardis {
 
   function changeFeeTake(uint feeTake_) public {
     require(msg.sender == admin);
-    require(feeTake_ <= feeTake || feeTake_ >= feeRebate);
+    require(feeTake_ <= feeTake);
     feeTake = feeTake_;
-  }
-
-  function changeFeeRebate(uint feeRebate_) public {
-    require(msg.sender == admin);
-    require(feeRebate_ >= feeRebate || feeRebate_ <= feeTake);
-    feeRebate = feeRebate_;
   }
 
   function changeNoFeeUntil(uint noFeeUntil_) public {
     require(msg.sender == admin);
     noFeeUntil = noFeeUntil_;
+  }
+
+  function getFeeOption(address user_) public view returns(bool) {
+    return feeOption[user_];
+  }
+
+  function changeFeeOption(address user_, bool level_) public {
+    require(msg.sender == user_);
+    feeOption[user_] = level_;
+    emit userChangeFeeOption(msg.sender, feeOption[msg.sender]);
+  }
+
+  function setResardisTokenAddress(address tokenaddress_) public {
+    require(msg.sender == admin);
+    resardisToken = tokenaddress_;
+  }
+
+  function changeResardisTokenFee(uint fee_) public {
+    require(msg.sender == admin);
+    resardisTokenFee = fee_;
   }
 
   function deposit() public payable {
@@ -122,18 +139,45 @@ contract Resardis {
   function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
     uint feeMakeXfer = 0;
     uint feeTakeXfer = 0;
-    uint feeRebateXfer = 0;
+    uint resardisTokenFeeXfer = 0;
 
     if (now >= noFeeUntil) {
       feeMakeXfer = amount.mul(feeMake) / (1 ether);
       feeTakeXfer = amount.mul(feeTake) / (1 ether);
+      resardisTokenFeeXfer = resardisTokenFee;
     }
 
-    tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
-    tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.add(feeRebateXfer).sub(feeMakeXfer));
-    tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer).sub(feeRebateXfer));
-    tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
-    tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    if (feeOption[user] == false && feeOption[msg.sender] == false) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer.add(feeTakeXfer));
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    } else if (feeOption[user] == true && feeOption[msg.sender] == true) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
+      tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
+      tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer).add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive.mul(amount) / amountGet);
+    } else if (feeOption[user] == false && feeOption[msg.sender] == true) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount);
+      tokens[resardisToken][msg.sender] = tokens[resardisToken][msg.sender].sub(resardisTokenFeeXfer); //depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount.sub(feeMakeXfer));
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeMakeXfer);
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
+    } else if (feeOption[user] == true && feeOption[msg.sender] == false) {
+      tokens[tokenGet][msg.sender] = tokens[tokenGet][msg.sender].sub(amount.add(feeTakeXfer));
+      tokens[tokenGet][user] = tokens[tokenGet][user].add(amount);
+      tokens[resardisToken][user] = tokens[resardisToken][user].sub(resardisTokenFeeXfer);
+      tokens[resardisToken][feeAccount] = tokens[resardisToken][feeAccount].add(resardisTokenFeeXfer);//depends on resardis token price. (a new solution will be designed.)
+      tokens[tokenGet][feeAccount] = tokens[tokenGet][feeAccount].add(feeTakeXfer);
+      tokens[tokenGive][user] = tokens[tokenGive][user].sub(amountGive.mul(amount) / amountGet);
+      tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
+    }
   }
 
   function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public view returns(bool) {
