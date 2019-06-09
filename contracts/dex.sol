@@ -17,6 +17,8 @@ contract Resardis {
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
   mapping (address => bool) public feeOption; //mapping of user accounts to mapping of fee payment option, 0 = user pays ether as a fee, 1 = user pays resardiscoin as a fee. User have an option to change this level anytime.
+  mapping (address => bool) public allowedDepositTokens; //mapping of token addresses to permission. If true, token is allowed to be deposited/traded/ordered.
+  mapping (address => bool) public allowedWithdrawTokens; //mapping of token addresses to permission. If true, token is allowed to be withdrawed.
 
   event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
   event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
@@ -85,6 +87,20 @@ contract Resardis {
     resardisTokenFee = fee_;
   }
 
+  function getAllowedDepositToken(address token_) public view returns(bool) {
+    return allowedDepositTokens[token_];
+  }
+
+  function getAllowedWithdrawToken(address token_) public view returns(bool) {
+    return allowedWithdrawTokens[token_];
+  }
+
+  function changeAllowedToken(address token_, bool depositPermit_, bool withdrawPermit_) public {
+    require(msg.sender == admin);
+    allowedDepositTokens[token_] = depositPermit_;
+    allowedWithdrawTokens[token_] = withdrawPermit_;
+  }
+
   function deposit() public payable {
     tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].add(msg.value);
     emit Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
@@ -100,6 +116,7 @@ contract Resardis {
   function depositToken(address token, uint amount) public {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
     require(token!=address(0));
+    require(allowedDepositTokens[token] == true);
     require(IERC20(token).transferFrom(msg.sender, address(this), amount));
     tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
     emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
@@ -107,6 +124,7 @@ contract Resardis {
 
   function withdrawToken(address token, uint amount) public {
     require(token!=address(0));
+    require(allowedWithdrawTokens[token] == true);
     require(tokens[token][msg.sender] >= amount);
     tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
     require(IERC20(token).transfer(msg.sender, amount));
@@ -118,6 +136,7 @@ contract Resardis {
   }
 
   function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
+    require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     orders[msg.sender][hash] = true;
     emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
@@ -125,6 +144,7 @@ contract Resardis {
 
   function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public {
     //amount is in amountGet terms
+    require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
     bytes32 hash = sha256(abi.encodePacked(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce));
     require((
       (orders[user][hash] || ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)),v,r,s) == user) &&
@@ -184,6 +204,10 @@ contract Resardis {
     if (!(
       tokens[tokenGet][sender] >= amount &&
       availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
+    )) return false;
+    if (!(
+      allowedDepositTokens[tokenGet] == true &&
+      allowedDepositTokens[tokenGive] == true
     )) return false;
     return true;
   }
