@@ -1,0 +1,20 @@
+#this file needs to be in the directory after the command 'loom init'
+ChainID: "resardis_local_test"
+RPCListenAddress: "tcp://0.0.0.0:21131"
+BlockchainLogLevel: "info"
+LoomLogLevel: "info"
+LogLevel: "info"
+ContractLogLevel: "info"
+RegistryVersion: 2
+ReceiptsVersion: 1
+EVMAccountsEnabled: true
+TransferGateway:
+  ContractEnabled: true
+LoomCoinTransferGateway:
+  ContractEnabled: true
+CreateEmptyBlocks: true
+DPOSVersion: 2
+BootLegacyDPoS: true
+CachingStoreConfig:
+  CachingEnabled: true
+
