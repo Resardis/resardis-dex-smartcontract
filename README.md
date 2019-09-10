@@ -40,5 +40,5 @@ cd <projectDir>
 yarn solhint "contracts/**/*.sol"  # Linting Solidity files
 yarn eslint .  # Linting JavaScript files, checking-only
 yarn eslint --fix .  # Auto-fix
-bash scripts/test.sh --network development  # Testing
+bash scripts/test.sh --network ganache_local  # Testing
 ```
