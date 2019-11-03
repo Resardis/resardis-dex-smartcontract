@@ -9,12 +9,11 @@ RegistryVersion: 2
 ReceiptsVersion: 1
 EVMAccountsEnabled: true
 TransferGateway:
-  ContractEnabled: true
+    ContractEnabled: true
 LoomCoinTransferGateway:
-  ContractEnabled: true
+    ContractEnabled: true
 CreateEmptyBlocks: true
 DPOSVersion: 2
 BootLegacyDPoS: true
 CachingStoreConfig:
-  CachingEnabled: true
-
+    CachingEnabled: true

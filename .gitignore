@@ -1,3 +1,47 @@
+# Loom Related
+loom
+loom_dev_privkey
+loom_dev_pubkey
+loom_private_key
+loomv2b_pk
+extdev_private_key
+mainnet_private_key
+loom_local_private_key
+loom_extdev_private_key
+loom_mainnet_private_key
+genesis.json
+app.db
+chaindata
+evm.db/
+receipts_db/
+
+
+# To prevent accidents
+*private_key
+private_key*
+*privatekey
+privatekey*
+*privateKey
+privateKey*
+*priv_key
+priv_key*
+*privkey
+privkey*
+*privKey
+privKey*
+
+*public_key
+public_key*
+*publickey
+publickey*
+*publicKey
+publicKey*
+*pub_key
+pub_key*
+*pubkey
+pubkey*
+*pubKey
+pubKey*
 
 # Created by https://www.gitignore.io/api/node,soliditytruffle
 # Edit at https://www.gitignore.io/?templates=node,soliditytruffle
@@ -106,46 +150,117 @@ blockchain/history
 #truffle
 .tern-port
 
-# loom
-loom
-loom_dev_privkey
-loom_dev_pubkey
-loom_private_key
-loomv2b_pk
-extdev_private_key
-mainnet_private_key
-loom_local_private_key
-loom_extdev_private_key
-loom_mainnet_private_key
-genesis.json
-app.db
-chaindata
-
-# To prevent accidents
-*private_key
-private_key*
-*privatekey
-privatekey*
-*privateKey
-privateKey*
-*priv_key
-priv_key*
-*privkey
-privkey*
-*privKey
-privKey*
-
-*public_key
-public_key*
-*publickey
-publickey*
-*publicKey
-publicKey*
-*pub_key
-pub_key*
-*pubkey
-pubkey*
-*pubKey
-pubKey*
-
 # End of https://www.gitignore.io/api/node,soliditytruffle
+
+# Created by https://www.gitignore.io/api/python
+# Edit at https://www.gitignore.io/?templates=python
+
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# End of https://www.gitignore.io/api/python
+
+# Manticore output files/folders
+mcore_*/

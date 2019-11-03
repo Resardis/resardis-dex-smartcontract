@@ -1,1 +1,8 @@
 *.sol linguist-language=Solidity
+*.js text eol=lf
+*.py text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.in text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf

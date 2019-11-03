@@ -111,6 +111,7 @@ module.exports = {
       },
       network_id: '*', // eslint-disable-line
     },
+
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port

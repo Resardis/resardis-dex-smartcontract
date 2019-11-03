@@ -1,44 +1,86 @@
 ## Table of Contents
 + [Development](#development)
-    + [Creating the Dev Env](#creating-the-dev-env)
+    + [Python Dependencies](#python-dependencies)
+    + [JavaScript Dependencies](#javascript-dependencies)
+    + [Deploying and Testing](#deploying-and-testing)
 
 ## Development
-### Creating the Dev Env
-+ `Yarn` is being used as the package manager for `Node.js` modules, and `truffle` as the development and testing toolbox.
-+ Install `Node.js` as a [Snap](https://snapcraft.io/) package. But first, if you have previously messed up with Node.js or node module installation and want a fresh start (on Debian/Ubuntu):
-```shell
-npm root  # check local module directory
-npm root -g  # check global module directory
-sudo apt-get purge nodejs npm yarnpkg # depending on the distro/version, "nodejs" might be called as "node"
-# Remember that depending on your config/distro, folders might differ
-# Check the directories first as shown at the beginning of the snippet
-sudo rm -rvf ~/node_modules ~/.node_modules /usr/local/lib/node_modules
-```
-You migth also want to check your `.bashrc` file for remaining `PATHS`.
+### Python Dependencies
++ The project uses several smart-contract security analysis tools written in Python, namely
+`mythril`, `slither` and `manticore`.
 
-Install [Node.js snap](https://github.com/nodesource/distributions/blob/master/README.md#snap):
++ For `mythril`, you need the following:
+```shell
+# Install libssl-dev, python3-dev
+sudo apt install libssl-dev python3-dev
+```
+
++ Install solidity compiler (`solc`) using snap (Debian/Ubuntu):
+```shell
+sudo apt-get update
+sudo apt-get install snapd
+sudo snap install solc
+```
+
++ Create a new `python3` virtual environment and activate it using:
+```shell
+python3 -m venv /path/to/new/virtual/environment
+source /path/to/new/virtual/environment/bin/activate
+```
+In Linux, you might need to install `python3-venv` package (in Debian-based distros) before executing the code above.
+
+While the venv is activated, update `pip` and `setuptools` and install `pip-tools` using:
+```shell
+pip install --no-cache-dir -U pip
+pip install --no-cache-dir -U setuptools
+pip install --no-cache-dir wheel
+pip install --no-cache-dir pip-tools
+```
+
++ Now sync the env with the `dev-requirements.txt` which has freezed list of Python packages.
+```shell
+pip-sync dev-requirements.txt
+```
+
+### JavaScript Dependencies
++ `Yarn` is being used as the package manager for `Node.js` modules, and `truffle` as the development and testing toolbox.
+
++ Install `Node.js` as a [Snap](https://snapcraft.io/) package (see [Node.js snap](https://github.com/nodesource/distributions/blob/master/README.md#snap)):
 ```shell
 sudo apt-get update
 sudo apt-get install snapd
 sudo snap install node --channel=10/stable --classic
 which -a node npm yarn  # confirm paths
 ```
+
 + `git clone` the repository.
 
-+ Install dependencies with `yarn`. Will be doing local installation into the project folder in order to not mess up with the global packages.:
++ Install dependencies with `yarn`. Local installation into the project folder:
 ```shell
 cd <projectDir>
 yarn install
 ```
 + Locally installed binaries can be called using `yarn commandName` while in the project folder if you don't want to tweak `PATH`.
 
-Also see [Yarn Workflow](https://yarnpkg.com/en/docs/yarn-workflow).
-
 ### Deploying and Testing
++ Linting, deploying and unit testing:
 ```shell
 cd <projectDir>
-yarn solhint "contracts/**/*.sol"  # Linting Solidity files
-yarn eslint .  # Linting JavaScript files, checking-only
-yarn eslint --fix .  # Auto-fix
-bash scripts/test.sh --network ganache_local  # Testing
+yarn lint:sol # Solidity linting
+yarn lint:sol:fix
+yarn lint:js # JavaScript linting
+yarn lint:js:fix
+yarn test # Deploy using truffle and apply unit tests
+```
++ Security testing:
+Activate the python venv:
+```shell
+source /path/to/new/virtual/environment/bin/activate
+cd <projectDir>
+```
+Run security analysis tools:
+```shell
+manticore ./contracts/dex.sol
+myth analyze ./contracts/dex.sol --execution-timeout <sec> --max-depth <number>
+slither ./contracts/dex.sol
 ```
