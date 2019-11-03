@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Smart contract for Resardis decentralized cryptocurrency exchange",
   "main": "index.js",
+  "scripts": {
+    "lint": "yarn lint:js && yarn lint:sol",
+    "lint:fix": "yarn lint:js:fix",
+    "lint:js": "yarn eslint .",
+    "lint:js:fix": "yarn eslint . --fix",
+    "lint:sol": "yarn solium -d 'contracts/'",
+    "lint:sol:fix": "yarn solium -d 'contracts/' --fix",
+    "test": "bash scripts/test.sh --network development"
+  },
   "repository": "https://github.com/kmotoko/resardis-smartcontract.git",
   "author": "None",
   "license": "UNLICENSED",
@@ -15,8 +24,8 @@
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
+    "ethlint": "^1.2.5",
     "ganache-cli": "^6.4.1",
-    "solhint": "^2.0.0",
     "truffle": "^5.0.7"
   }
 }
