@@ -24,6 +24,12 @@ contract Resardis {
     //mapping of user accounts to mapping of fee payment option
     //0 = pays ether as a fee, 1 = pays resardiscoin as a fee.
     mapping (address => bool) public feeOption;
+    //mapping of token addresses to permission.
+    //If true, token is allowed to be deposited/traded/ordered.
+    mapping (address => bool) public allowedDepositTokens;
+    //mapping of token addresses to permission.
+    //If true, token is allowed to be withdrawed.
+    mapping (address => bool) public allowedWithdrawTokens;
 
     event Order(
         address tokenGet,
@@ -142,6 +148,20 @@ contract Resardis {
         resardisTokenFee = fee_;
     }
 
+    function getAllowedDepositToken(address token_) public view returns(bool) {
+        return allowedDepositTokens[token_];
+    }
+
+    function getAllowedWithdrawToken(address token_) public view returns(bool) {
+        return allowedWithdrawTokens[token_];
+    }
+
+    function changeAllowedToken(address token_, bool depositPermit_, bool withdrawPermit_) public {
+        require(msg.sender == admin);
+        allowedDepositTokens[token_] = depositPermit_;
+        allowedWithdrawTokens[token_] = withdrawPermit_;
+    }
+
     function deposit() public payable {
         tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].add(msg.value);
         emit Deposit(
@@ -168,6 +188,7 @@ contract Resardis {
         //remember to call Token(address).approve(this, amount)
         //or this contract will not be able to do the transfer on your behalf.
         require(token!=address(0));
+        require(allowedDepositTokens[token] == true);
         require(IERC20(token).transferFrom(msg.sender, address(this), amount));
         tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
         emit Deposit(
@@ -180,6 +201,7 @@ contract Resardis {
 
     function withdrawToken(address token, uint amount) public {
         require(token!=address(0));
+        require(allowedWithdrawTokens[token] == true);
         require(tokens[token][msg.sender] >= amount);
         tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
         require(IERC20(token).transfer(msg.sender, amount));
@@ -205,6 +227,7 @@ contract Resardis {
     )
         public
     {
+        require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
         bytes32 hash = sha256(
             abi.encodePacked(
                 this,
@@ -244,6 +267,7 @@ contract Resardis {
         public
     {
         //amount is in amountGet terms
+        require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
         bytes32 hash = sha256(
             abi.encodePacked(
                 this,
@@ -320,6 +344,10 @@ contract Resardis {
                 r,
                 s
             ) >= amount
+        )) return false;
+        if (!(
+          allowedDepositTokens[tokenGet] == true &&
+          allowedDepositTokens[tokenGive] == true
         )) return false;
         return true;
     }
