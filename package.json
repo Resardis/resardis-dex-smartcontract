@@ -10,7 +10,7 @@
     "lint:js:fix": "yarn eslint . --fix",
     "lint:sol": "yarn solium -d 'contracts/'",
     "lint:sol:fix": "yarn solium -d 'contracts/' --fix",
-    "test": "bash scripts/test.sh --network development"
+    "test": "bash scripts/test.sh --network ganache_local"
   },
   "repository": "https://github.com/kmotoko/resardis-smartcontract.git",
   "author": "None",
@@ -26,6 +26,8 @@
     "eslint-plugin-standard": "^4.0.0",
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.4.1",
+    "loom-js": "^1.55.0",
+    "loom-truffle-provider": "^0.13.0",
     "truffle": "^5.0.7"
   }
 }

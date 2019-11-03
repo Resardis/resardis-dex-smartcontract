@@ -3,7 +3,7 @@
 const Resardis = artifacts.require('Resardis');
 
 module.exports = function (deployer, network, accounts) {
-  if (network == 'development') { // eslint-disable-line
+  if (network == 'ganache_local') { // eslint-disable-line
     const admin = accounts[0];
     const feeAccount = accounts[1];
     const feeMake = web3.utils.toBN(web3.utils.toWei('0.0015', 'ether'));
