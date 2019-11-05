@@ -101,68 +101,68 @@ contract Resardis {
         revert();
     }
 
-    function changeAdmin(address admin_) public {
+    function changeAdmin(address admin_) external {
         require(msg.sender == admin);
         admin = admin_;
     }
 
-    function changeFeeAccount(address feeAccount_) public {
+    function changeFeeAccount(address feeAccount_) external {
         require(msg.sender == admin);
         feeAccount = feeAccount_;
     }
 
-    function changeFeeMake(uint feeMake_) public {
+    function changeFeeMake(uint feeMake_) external {
         require(msg.sender == admin);
         require(feeMake_ <= feeMake);
         feeMake = feeMake_;
     }
 
-    function changeFeeTake(uint feeTake_) public {
+    function changeFeeTake(uint feeTake_) external {
         require(msg.sender == admin);
         require(feeTake_ <= feeTake);
         feeTake = feeTake_;
     }
 
-    function changeNoFeeUntil(uint noFeeUntil_) public {
+    function changeNoFeeUntil(uint noFeeUntil_) external {
         require(msg.sender == admin);
         noFeeUntil = noFeeUntil_;
     }
 
-    function getFeeOption(address user_) public view returns(bool) {
+    function getFeeOption(address user_) external view returns(bool) {
         return feeOption[user_];
     }
 
-    function changeFeeOption(address user_, bool level_) public {
+    function changeFeeOption(address user_, bool level_) external {
         require(msg.sender == user_);
         feeOption[user_] = level_;
         emit UserChangeFeeOption(msg.sender, feeOption[msg.sender]);
     }
 
-    function setResardisTokenAddress(address tokenaddress_) public {
+    function setResardisTokenAddress(address tokenaddress_) external {
         require(msg.sender == admin);
         resardisToken = tokenaddress_;
     }
 
-    function changeResardisTokenFee(uint fee_) public {
+    function changeResardisTokenFee(uint fee_) external {
         require(msg.sender == admin);
         resardisTokenFee = fee_;
     }
 
-    function getAllowedDepositToken(address token_) public view returns(bool) {
+    function getAllowedDepositToken(address token_) external view returns(bool) {
         return allowedDepositTokens[token_];
     }
 
-    function getAllowedWithdrawToken(address token_) public view returns(bool) {
+    function getAllowedWithdrawToken(address token_) external view returns(bool) {
         return allowedWithdrawTokens[token_];
     }
 
-    function changeAllowedToken(address token_, bool depositPermit_, bool withdrawPermit_) public {
+    function changeAllowedToken(address token_, bool depositPermit_, bool withdrawPermit_) external {
         require(msg.sender == admin);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
     }
 
-    function deposit() public payable {
+    function deposit() external payable {
         tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].add(msg.value);
         emit Deposit(
             address(0),
@@ -172,7 +172,7 @@ contract Resardis {
         );
     }
 
-    function withdraw(uint amount) public {
+    function withdraw(uint amount) external {
         require(tokens[address(0)][msg.sender] >= amount);
         tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].sub(amount);
         msg.sender.transfer(amount);
@@ -184,7 +184,7 @@ contract Resardis {
         );
     }
 
-    function depositToken(address token, uint amount) public {
+    function depositToken(address token, uint amount) external {
         //remember to call Token(address).approve(this, amount)
         //or this contract will not be able to do the transfer on your behalf.
         require(token!=address(0));
@@ -199,7 +199,7 @@ contract Resardis {
         );
     }
 
-    function withdrawToken(address token, uint amount) public {
+    function withdrawToken(address token, uint amount) external {
         require(token!=address(0));
         require(allowedWithdrawTokens[token] == true);
         require(tokens[token][msg.sender] >= amount);
@@ -213,7 +213,7 @@ contract Resardis {
         );
     }
 
-    function balanceOf(address token, address user) public view returns (uint) {
+    function balanceOf(address token, address user) external view returns (uint) {
         return tokens[token][user];
     }
 
@@ -225,7 +225,7 @@ contract Resardis {
         uint expires,
         uint nonce
     )
-        public
+        external
     {
         require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
         bytes32 hash = sha256(
@@ -264,7 +264,7 @@ contract Resardis {
         bytes32 s,
         uint amount
     )
-        public
+        external
     {
         //amount is in amountGet terms
         require(allowedDepositTokens[tokenGet] == true && allowedDepositTokens[tokenGive] == true);
@@ -328,7 +328,7 @@ contract Resardis {
         uint amount,
         address sender
     )
-        public view returns(bool)
+        external view returns(bool)
     {
         if (!(
             tokens[tokenGet][sender] >= amount &&
@@ -406,7 +406,7 @@ contract Resardis {
         bytes32 r,
         bytes32 s
     )
-        public view returns(uint)
+        external view returns(uint)
     {
         bytes32 hash = sha256(
             abi.encodePacked(
@@ -433,7 +433,7 @@ contract Resardis {
         bytes32 r,
         bytes32 s
     )
-        public
+        external
     {
         bytes32 hash = sha256(
             abi.encodePacked(
