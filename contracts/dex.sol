@@ -156,7 +156,13 @@ contract Resardis {
         return allowedWithdrawTokens[token_];
     }
 
-    function changeAllowedToken(address token_, bool depositPermit_, bool withdrawPermit_) external {
+    function changeAllowedToken(
+        address token_,
+        bool depositPermit_,
+        bool withdrawPermit_
+    )
+        external
+    {
         require(msg.sender == admin);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
@@ -352,48 +358,6 @@ contract Resardis {
         return true;
     }
 
-    function availableVolume(
-        address tokenGet,
-        uint amountGet,
-        address tokenGive,
-        uint amountGive,
-        uint expires,
-        uint nonce,
-        address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        public view returns(uint)
-    {
-        bytes32 hash = sha256(
-            abi.encodePacked(
-                this,
-                tokenGet,
-                amountGet,
-                tokenGive,
-                amountGive,
-                expires,
-                nonce
-            )
-        );
-        if (!(
-            (orders[user][hash] || ecrecover(
-                keccak256(
-                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-                ),
-                v,
-                r,
-                s
-            ) == user) &&
-            block.number <= expires
-        )) return 0;
-        uint available1 = amountGet.sub(orderFills[user][hash]);
-        uint available2 = amountGet.mul(tokens[tokenGive][user]) / amountGive;
-        if (available1<available2) return available1;
-        return available2;
-    }
-
     function amountFilled(
         address tokenGet,
         uint amountGet,
@@ -470,6 +434,48 @@ contract Resardis {
             r,
             s
         );
+    }
+
+    function availableVolume(
+        address tokenGet,
+        uint amountGet,
+        address tokenGive,
+        uint amountGive,
+        uint expires,
+        uint nonce,
+        address user,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        public view returns(uint)
+    {
+        bytes32 hash = sha256(
+            abi.encodePacked(
+                this,
+                tokenGet,
+                amountGet,
+                tokenGive,
+                amountGive,
+                expires,
+                nonce
+            )
+        );
+        if (!(
+            (orders[user][hash] || ecrecover(
+                keccak256(
+                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+                ),
+                v,
+                r,
+                s
+            ) == user) &&
+            block.number <= expires
+        )) return 0;
+        uint available1 = amountGet.sub(orderFills[user][hash]);
+        uint available2 = amountGet.mul(tokens[tokenGive][user]) / amountGive;
+        if (available1<available2) return available1;
+        return available2;
     }
 
     function tradeBalances(
