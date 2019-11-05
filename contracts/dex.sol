@@ -189,8 +189,8 @@ contract Resardis {
         //or this contract will not be able to do the transfer on your behalf.
         require(token!=address(0));
         require(allowedDepositTokens[token] == true);
-        require(IERC20(token).transferFrom(msg.sender, address(this), amount));
         tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount));
         emit Deposit(
             token,
             msg.sender,
