@@ -91,25 +91,25 @@ contract('TestResardis-Trading', async accounts => {
     );
     const availableAfterOrder = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     const filledAfterOrder = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     // do trading
     await dexInstance.trade(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', tradeAmount, { from: secAccount, value: 0 }
+      firstAccount, tradeAmount, { from: secAccount, value: 0 }
     );
     // check the order volume again
     const availableAfterTrade = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     const filledAfterTrade = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
 
     const finTokenBalFirst = await dexInstance.balanceOf(tokenAddress, firstAccount, { from: firstAccount });
@@ -181,11 +181,11 @@ contract('TestResardis-Trading', async accounts => {
     // check how much of the order volume is available and/or filled
     const availableFirst = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     const filledFirst = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
 
     assert.notEqual(initBalance.toString(), finalBalance.toString());
@@ -219,25 +219,25 @@ contract('TestResardis-Trading', async accounts => {
     // check how much of the order volume is available and/or filled
     const availableFirst = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     const filledFirst = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     // cancel the order
     await dexInstance.cancelOrder(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      0, '0x0', '0x0', { from: firstAccount, value: 0 }
+      { from: firstAccount, value: 0 }
     );
     // check order volume again
     const availableSecond = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     const filledSecond = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, 0, '0x0', '0x0', { from: firstAccount }
+      firstAccount, { from: firstAccount }
     );
     assert.notEqual(initBalance.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());

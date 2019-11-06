@@ -48,10 +48,7 @@ contract Resardis {
         uint amountGive,
         uint expires,
         uint nonce,
-        address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        address user
     );
 
     event Trade(
@@ -265,9 +262,6 @@ contract Resardis {
         uint expires,
         uint nonce,
         address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s,
         uint amount
     )
         external
@@ -287,16 +281,7 @@ contract Resardis {
         );
         require(
             (
-                (
-                    orders[user][hash] || ecrecover(
-                        keccak256(
-                            abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-                        ),
-                        v,
-                        r,
-                        s
-                    ) == user
-                ) &&
+                orders[user][hash] &&
                 block.number <= expires &&
                 orderFills[user][hash].add(amount) <= amountGet
             )
@@ -328,9 +313,6 @@ contract Resardis {
         uint expires,
         uint nonce,
         address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s,
         uint amount,
         address sender
     )
@@ -345,10 +327,7 @@ contract Resardis {
                 amountGive,
                 expires,
                 nonce,
-                user,
-                v,
-                r,
-                s
+                user
             ) >= amount
         )) return false;
         if (!(
@@ -365,10 +344,7 @@ contract Resardis {
         uint amountGive,
         uint expires,
         uint nonce,
-        address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        address user
     )
         external view returns(uint)
     {
@@ -392,10 +368,7 @@ contract Resardis {
         address tokenGive,
         uint amountGive,
         uint expires,
-        uint nonce,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        uint nonce
     )
         external
     {
@@ -410,17 +383,7 @@ contract Resardis {
                 nonce
             )
         );
-        require(
-            (orders[msg.sender][hash] || ecrecover(
-                keccak256(
-                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-                ),
-                v,
-                r,
-                s
-                ) == msg.sender
-            )
-        );
+        require(orders[msg.sender][hash]);
         orderFills[msg.sender][hash] = amountGet;
         emit Cancel(
             tokenGet,
@@ -429,10 +392,7 @@ contract Resardis {
             amountGive,
             expires,
             nonce,
-            msg.sender,
-            v,
-            r,
-            s
+            msg.sender
         );
     }
 
@@ -443,10 +403,7 @@ contract Resardis {
         uint amountGive,
         uint expires,
         uint nonce,
-        address user,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        address user
     )
         public view returns(uint)
     {
@@ -461,17 +418,7 @@ contract Resardis {
                 nonce
             )
         );
-        if (!(
-            (orders[user][hash] || ecrecover(
-                keccak256(
-                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-                ),
-                v,
-                r,
-                s
-            ) == user) &&
-            block.number <= expires
-        )) return 0;
+        if (!(orders[user][hash] && block.number <= expires)) return 0;
         uint available1 = amountGet.sub(orderFills[user][hash]);
         uint available2 = amountGet.mul(tokens[tokenGive][user]) / amountGive;
         if (available1<available2) return available1;
