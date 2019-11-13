@@ -15,6 +15,8 @@ chaindata
 evm.db/
 receipts_db/
 
+# Rinkeby
+rinkeby_*
 
 # To prevent accidents
 *private_key
