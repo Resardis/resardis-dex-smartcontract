@@ -29,6 +29,7 @@ const { readFileSync } = require('fs');
 const path = require('path');
 const LoomTruffleProvider = require('loom-truffle-provider');
 const fs = require('fs');
+const PrivateKeyProvider = require('truffle-privatekey-provider');
 
 const dummyMnemonic = 'confirm first hobby oven year spider echo ostrich present hundred multiply huge';
 
@@ -88,6 +89,7 @@ module.exports = {
         const privateKeyPath = path.join(__dirname, 'loom_extdev_private_key');
         if (fs.existsSync(privateKeyPath)) {
           const loomTruffleProvider = getLoomProviderWithPrivateKey(privateKeyPath, chainId, writeUrl, readUrl);
+          loomTruffleProvider.createExtraAccountsFromMnemonic(dummyMnemonic, 15);
           return loomTruffleProvider;
         } else {
           return false;
@@ -110,6 +112,30 @@ module.exports = {
         }
       },
       network_id: '*', // eslint-disable-line
+    },
+
+    rinkeby: {
+      provider: function () {
+        if (!process.env.INFURA_API_KEY) {
+          throw new Error('INFURA_API_KEY env var not set');
+        }
+        const privateKeyPath = path.join(__dirname, 'rinkeby_private_key');
+        if (fs.existsSync(privateKeyPath)) {
+          const privateKey = readFileSync(privateKeyPath, 'utf-8');
+          const rinkebyPrivateKeyProvider = PrivateKeyProvider(
+            privateKey,
+            `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
+            0,
+            10,
+          );
+          return rinkebyPrivateKeyProvider;
+        } else {
+          return false;
+        }
+      },
+      network_id: 4, // eslint-disable-line
+      gasPrice: 15000000001,
+      skipDryRun: true,
     },
 
     // Another network with more advanced options...
@@ -143,7 +169,7 @@ module.exports = {
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
-    // timeout: 100000
+    // timeout: 100000,
   },
 
   // Configure your compilers
