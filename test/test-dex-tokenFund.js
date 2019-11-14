@@ -1,7 +1,7 @@
 'use strict';
 
 const Resardis = artifacts.require('Resardis');
-const erc20 = artifacts.require('ERC20Mintable');
+const erc20 = artifacts.require('ERC20MintableX');
 
 contract('TestResardis-TokenFunding', async accounts => {
   let initMinter;
