@@ -121,14 +121,9 @@ module.exports = {
         }
         const privateKeyPath = path.join(__dirname, 'rinkeby_private_key');
         if (fs.existsSync(privateKeyPath)) {
-          const privateKey = readFileSync(privateKeyPath, 'utf-8');
-          const rinkebyPrivateKeyProvider = PrivateKeyProvider(
-            privateKey,
-            `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-            0,
-            10,
-          );
-          return rinkebyPrivateKeyProvider;
+          const privateKey = readFileSync(path.join(__dirname, 'rinkeby_private_key'), 'utf-8');
+          const rinkebyUrl = `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`;
+          return new PrivateKeyProvider(privateKey, rinkebyUrl, 0, 10);
         } else {
           return false;
         }
