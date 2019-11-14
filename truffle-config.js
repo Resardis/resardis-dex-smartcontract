@@ -129,8 +129,10 @@ module.exports = {
         }
       },
       network_id: 4, // eslint-disable-line
-      gasPrice: 15000000001,
-      skipDryRun: true,
+      gasPrice: 15000000000, // in wei
+      skipDryRun: false,
+      confirmations: 2,
+      timeoutBlocks: 50,
     },
 
     // Another network with more advanced options...
