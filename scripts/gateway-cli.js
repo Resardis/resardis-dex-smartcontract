@@ -14,10 +14,10 @@ const { OfflineWeb3Signer } = require('loom-js/dist/solidity-helpers');
 const BN = require('bn.js');
 const { ethers } = require('ethers');
 
-const MyRinkebyTokenJSON = require('./src/contracts/MyRinkebyToken.json');
-const MyRinkebyCoinJSON = require('./src/contracts/MyRinkebyCoin.json');
-const MyTokenJSON = require('./src/contracts/MyToken.json');
-const MyCoinJSON = require('./src/contracts/MyCoin.json');
+const MyRinkebyTokenJSON = require('../build/contracts/ERC721X.json');
+const MyRinkebyCoinJSON = require('../build/contracts/ERC20MintableX.json');
+const MyTokenJSON = require('../build/contracts/ERC721Loom.json');
+const MyCoinJSON = require('../build/contracts/ERC20Loom.json');
 
 const TransferGateway = Contracts.TransferGateway;
 const AddressMapper = Contracts.AddressMapper;
