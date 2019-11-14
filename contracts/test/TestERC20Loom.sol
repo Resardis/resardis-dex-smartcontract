@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "./vendor/ERC20.sol";
+import "../vendor/ERC20.sol";
 
 contract ERC20Loom is ERC20 {
     // Transfer Gateway contract address
