@@ -96,6 +96,8 @@ module.exports = {
         }
       },
       network_id: '9545242630824', // eslint-disable-line
+      confirmations: 2,
+      timeoutBlocks: 200,
     },
 
     loom_mainnet: { // eslint-disable-line
@@ -166,7 +168,7 @@ module.exports = {
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
-    // timeout: 100000,
+    timeout: 360000, // in miliseconds
   },
 
   // Configure your compilers
