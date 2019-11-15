@@ -1,5 +1,7 @@
 'use strict';
 
+// Modified from https://github.com/loomnetwork/truffle-dappchain-example
+
 const Tx = require('ethereumjs-tx');
 const Web3 = require('web3');
 const program = require('commander');
@@ -14,9 +16,11 @@ const { OfflineWeb3Signer } = require('loom-js/dist/solidity-helpers');
 const BN = require('bn.js');
 const { ethers } = require('ethers');
 
-const MyRinkebyTokenJSON = require('../build/contracts/ERC721X.json');
+// MyRinkebyTokenJSON is actually ERC721, which we are not using
+const MyRinkebyTokenJSON = require('../build/contracts/ERC20MintableX.json');
 const MyRinkebyCoinJSON = require('../build/contracts/ERC20MintableX.json');
-const MyTokenJSON = require('../build/contracts/ERC721Loom.json');
+// MyTokenJSON is actually ERC721, which we are not using
+const MyTokenJSON = require('../build/contracts/ERC20Loom.json');
 const MyCoinJSON = require('../build/contracts/ERC20Loom.json');
 
 const TransferGateway = Contracts.TransferGateway;
@@ -65,14 +69,15 @@ async function depositCoinToRinkebyGateway (web3js, amount, ownerAccount, gas) {
   const gasEstimate = await contract.methods
     .approve(rinkebyGatewayAddress, amount.toString())
     .estimateGas({ from: ownerAccount.address });
+  const gasEstimateSafe = gasEstimate * 2; // be on the safe-side
 
-  if (gasEstimate === gas) {
+  if (gasEstimateSafe > gas) {
     throw new Error('Not enough enough gas, send more.');
   }
 
   await contract.methods
     .approve(rinkebyGatewayAddress, amount.toString())
-    .send({ from: ownerAccount.address, gas: gasEstimate });
+    .send({ from: ownerAccount.address, gas: gas });
 
   const tx = await gateway.depositERC20Async(amount, contractAddress, { gasLimit: gas });
   return tx.hash;
@@ -416,7 +421,7 @@ async function withdrawTokenFromRinkebyGateway ({ web3js, web3Account, receipt, 
 }
 
 function loadRinkebyAccount () {
-  const privateKey = fs.readFileSync(path.join(__dirname, './rinkeby_private_key'), 'utf-8');
+  const privateKey = fs.readFileSync(path.join(__dirname, '../rinkeby_private_key'), 'utf-8');
   const web3js = new Web3(`https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`);
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey);
   web3js.eth.accounts.wallet.add(ownerAccount);
@@ -424,7 +429,7 @@ function loadRinkebyAccount () {
 }
 
 function loadExtdevAccount () {
-  const privateKeyStr = fs.readFileSync(path.join(__dirname, './extdev_private_key'), 'utf-8');
+  const privateKeyStr = fs.readFileSync(path.join(__dirname, '../loom_extdev_private_key'), 'utf-8');
   const privateKey = CryptoUtils.B64ToUint8Array(privateKeyStr);
   const publicKey = CryptoUtils.publicKeyFromPrivateKey(privateKey);
   const client = new Client(
@@ -502,7 +507,7 @@ program
     try {
       const actualAmount = new BN(amount).mul(coinMultiplier);
       const txHash = await depositCoinToRinkebyGateway(
-        web3js, actualAmount, account, options.gas || 350000,
+        web3js, actualAmount, account, options.gas || 1500000,
       );
       console.log(`${amount} tokens deposited to Ethereum Gateway.`);
       console.log(`Rinkeby tx hash: ${txHash}`);
@@ -562,7 +567,7 @@ program
         web3js: rinkeby.web3js,
         web3Account: rinkeby.account,
         receipt,
-        gas: options.gas || 350000,
+        gas: options.gas || 1500000,
       });
       console.log(`${amount} tokens withdrawn from Ethereum Gateway.`);
       console.log(`Rinkeby tx hash: ${txHash}`);
@@ -606,7 +611,7 @@ program
         web3js: rinkeby.web3js,
         web3Account: rinkeby.account,
         receipt,
-        gas: options.gas || 350000,
+        gas: options.gas || 1500000,
       });
       amountInEth = actualAmount.div(new BN(10).pow(new BN(18))).toString();
       console.log(`${actualAmount.toString()} wei (${amountInEth} in eth) withdrawn from Ethereum Gateway.`);
@@ -649,7 +654,7 @@ program
         web3js: rinkeby.web3js,
         web3Account: rinkeby.account,
         receipt,
-        gas: options.gas || 350000,
+        gas: options.gas || 1500000,
       });
       console.log(`Token ${uid} withdrawn from Ethereum Gateway.`);
       console.log(`Rinkeby tx hash: ${txHash}`);
@@ -685,7 +690,7 @@ program
           web3js: rinkeby.web3js,
           web3Account: rinkeby.account,
           receipt,
-          gas: options.gas || 350000,
+          gas: options.gas || 1500000,
         });
         console.log(`${receipt.tokenAmount.div(coinMultiplier).toString()} tokens withdrawn from Etheruem Gateway.`);
         console.log(`Rinkeby tx hash: ${txHash}`);
@@ -695,7 +700,7 @@ program
           web3js: rinkeby.web3js,
           web3Account: rinkeby.account,
           receipt,
-          gas: options.gas || 350000,
+          gas: options.gas || 1500000,
         });
         console.log(`Token ${receipt.tokenId.toString()} withdrawn from Ethereum Gateway.`);
         console.log(`Rinkeby tx hash: ${txHash}`);
@@ -705,7 +710,7 @@ program
           web3js: rinkeby.web3js,
           web3Account: rinkeby.account,
           receipt,
-          gas: options.gas || 350000,
+          gas: options.gas || 1500000,
         });
         const amountInWei = new BN(receipt.tokenAmount);
         const amountInEth = amountInWei.div(new BN(10).pow(new BN(18)));
@@ -805,7 +810,7 @@ program
   .action(async function (uid, options) {
     const { account, web3js } = loadRinkebyAccount();
     try {
-      const tx = await depositTokenToGateway(web3js, uid, account.address, options.gas || 350000);
+      const tx = await depositTokenToGateway(web3js, uid, account.address, options.gas || 1500000);
       console.log(`Token ${uid} deposited, Rinkeby tx hash: ${tx.transactionHash}`);
     } catch (err) {
       console.error(err);
@@ -819,7 +824,7 @@ program
   .action(async function (uid, options) {
     const { account, web3js } = loadRinkebyAccount();
     try {
-      const tx = await mintToken(web3js, uid, account.address, options.gas || 350000);
+      const tx = await mintToken(web3js, uid, account.address, options.gas || 1500000);
       console.log(`Token ${uid} minted, Rinkeby tx hash: ${tx.transactionHash}`);
     } catch (err) {
       console.error(err);
