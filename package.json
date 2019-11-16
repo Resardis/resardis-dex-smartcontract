@@ -1,7 +1,42 @@
 {
   "name": "resardis-smartcontract",
   "version": "0.1.0",
-  "description": "Smart contract for Resardis decentralized cryptocurrency exchange",
+  "description": "Smart contract of the Resardis Decentralized Cryptocurrency Exchange",
+  "homepage": "https://www.resardis.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kmotoko/resardis-smartcontract.git"
+  },
+  "bugs": "https://github.com/kmotoko/resardis-smartcontract/issues",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "decentralized exchange",
+    "decentralized cryptocurrency exchange",
+    "loom",
+    "ethereum",
+    "blockchain",
+    "cryptocurrency"
+  ],
+  "contributors": [
+    {
+      "name": "Cagatay Aydin",
+      "email": "aydincagatay@yandex.com"
+    },
+    {
+      "name": "Ilhan Cem Duru",
+      "email": "icemduru@gmail.com"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Cagatay Aydin",
+      "email": "aydincagatay@yandex.com"
+    },
+    {
+      "name": "Ilhan Cem Duru",
+      "email": "icemduru@gmail.com"
+    }
+  ],
   "main": "index.js",
   "scripts": {
     "lint": "yarn lint:js && yarn lint:sol",
@@ -10,16 +45,20 @@
     "lint:js:fix": "yarn eslint . --fix",
     "lint:sol": "yarn solium -d 'contracts/'",
     "lint:sol:fix": "yarn solium -d 'contracts/' --fix",
-    "deploy": "truffle migrate --reset --network ganache_local",
+    "get:loom": "bash ./scripts/get-loom.sh",
+    "get:loom:update": "bash ./scripts/update-loom.sh",
+    "gen:extdev-key": "bash ./scripts/generate-extdev-key.sh",
+    "gen:rinkeby-key": "node ./scripts/generate-eth-key.js rinkeby",
+    "deploy:ganache": "truffle migrate --reset --network ganache_local",
     "deploy:loomchain": "truffle migrate --reset --network loom_dapp_chain",
-    "deploy:extdev": "bash scripts/deploy_loom.sh --network loom_extdev_plasma_us1",
+    "deploy:extdev": "truffle migrate --reset --network loom_extdev_plasma_us1",
     "deploy:rinkeby": "truffle migrate --reset --network rinkeby",
     "test": "bash scripts/test.sh --network ganache_local"
   },
-  "repository": "https://github.com/kmotoko/resardis-smartcontract.git",
-  "author": "None",
-  "license": "UNLICENSED",
-  "private": true,
+  "engines": {
+    "node": ">=10.0.0 <11.0.0",
+    "yarn": ">=1.0.0 <2.0.0"
+  },
   "devDependencies": {
     "bip39": "^3.0.2",
     "bn.js": "^5.0.0",
