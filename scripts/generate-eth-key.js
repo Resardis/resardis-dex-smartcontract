@@ -12,14 +12,21 @@ const bip39 = require('bip39');
 const hdkey = require('ethereumjs-wallet/hdkey');
 
 const prefix = 'rinkeby';
+const privateDir = '../private'; // add to gitignore
 
 const mnemonic = bip39.generateMnemonic();
-
 const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic));
 const walletHdpath = 'm/44\'/60\'/0\'/0/';
-
 const wallet = hdwallet.derivePath(walletHdpath + '0').getWallet();
 
-fs.writeFileSync(path.join(__dirname, `../${prefix}_account`), '0x' + wallet.getAddress().toString('hex'));
-fs.writeFileSync(path.join(__dirname, `../${prefix}_mnemonic`), mnemonic);
-fs.writeFileSync(path.join(__dirname, `../${prefix}_private_key`), wallet.getPrivateKey().toString('hex'));
+if (fs.existsSync(path.join(__dirname, `${privateDir}`, '/'))) {
+  console.log('Private directory already exists');
+} else {
+  console.log('Creating private directory');
+  fs.mkdirSync(path.join(__dirname, `${privateDir}`));
+}
+
+console.log('Creating Eth keys');
+fs.writeFileSync(path.join(__dirname, `${privateDir}/${prefix}_account`), '0x' + wallet.getAddress().toString('hex'));
+fs.writeFileSync(path.join(__dirname, `${privateDir}/${prefix}_mnemonic`), mnemonic);
+fs.writeFileSync(path.join(__dirname, `${privateDir}/${prefix}_private_key`), wallet.getPrivateKey().toString('hex'));
