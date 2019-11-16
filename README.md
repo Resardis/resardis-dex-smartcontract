@@ -63,16 +63,44 @@ yarn install
 + Locally installed binaries can be called using `yarn commandName` while in the project folder if you don't want to tweak `PATH`.
 
 ### Deploying and Testing
-+ Linting, deploying and unit testing:
+#### Linting
 ```shell
 cd <projectDir>
 yarn lint:sol # Solidity linting
 yarn lint:sol:fix
 yarn lint:js # JavaScript linting
 yarn lint:js:fix
+```
+
+#### Mapping & Minting ERC20 betwwen Loom & Eth Networks
+`contracts/test` directory has sample contracts that can be deployed on Loom and Eth networks.
++ First, create rinkeby keys: `yarn gen:rinkeby-key`
++ Put ETH into the rinkeby account.
++ Get or update loom binary: `yarn get:loom` or `yarn get:loom:update`, respectively.
++ Create loom keys: `yarn gen:extdev-key`
++ Set Infura keys for rinkeby: `export INFURA_API_KEY=XXXX`
++ Deploy to rinkeby: `yarn deploy:rinkeby`
++ Deploy to loom extdev: `yarn deploy:extdev`
++ Map contracts between rinkeby and extdev: `node ./scripts/gateway-cli.js map-contracts coin`
++ Map extdev account to rinkeby account. This is only necessary when transferring from rinkeby to extdev, not the other way around: `node ./gateway-cli.js map-contracts coin`
++ Truffle migration should have already minted the coin on rinkeby. You can now use the following:
+```shell
+# transfer 70 tokens to extdev PlasmaChain
+node ./gateway-cli.js deposit-coin 70
+# check how many tokens you have on Rinkeby
+node ./gateway-cli.js coin-balance -c eth
+# check how many tokens you have on extdev
+node ./gateway-cli.js coin-balance
+# check how many tokens the Gateway holds on Rinkeby
+node ./gateway-cli.js coin-balance -a gateway -c eth
+```
+
+#### Unit Testing
+```shell
 yarn test # Deploy using truffle and apply unit tests
 ```
-+ Security testing:
+
+#### Security Testing
 Activate the python venv:
 ```shell
 source /path/to/new/virtual/environment/bin/activate
