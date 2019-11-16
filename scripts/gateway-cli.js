@@ -16,6 +16,7 @@ const { OfflineWeb3Signer } = require('loom-js/dist/solidity-helpers');
 const BN = require('bn.js');
 const { ethers } = require('ethers');
 
+const privateDir = '../private'; // add to gitignore
 // MyRinkebyTokenJSON is actually ERC721, which we are not using
 const MyRinkebyTokenJSON = require('../build/contracts/ERC20MintableX.json');
 const MyRinkebyCoinJSON = require('../build/contracts/ERC20MintableX.json');
@@ -421,7 +422,7 @@ async function withdrawTokenFromRinkebyGateway ({ web3js, web3Account, receipt, 
 }
 
 function loadRinkebyAccount () {
-  const privateKey = fs.readFileSync(path.join(__dirname, '../rinkeby_private_key'), 'utf-8');
+  const privateKey = fs.readFileSync(path.join(__dirname, `${privateDir}/rinkeby_private_key`), 'utf-8');
   const web3js = new Web3(`https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`);
   const ownerAccount = web3js.eth.accounts.privateKeyToAccount('0x' + privateKey);
   web3js.eth.accounts.wallet.add(ownerAccount);
@@ -429,7 +430,7 @@ function loadRinkebyAccount () {
 }
 
 function loadExtdevAccount () {
-  const privateKeyStr = fs.readFileSync(path.join(__dirname, '../loom_extdev_private_key'), 'utf-8');
+  const privateKeyStr = fs.readFileSync(path.join(__dirname, `${privateDir}/loom_extdev_private_key`), 'utf-8');
   const privateKey = CryptoUtils.B64ToUint8Array(privateKeyStr);
   const publicKey = CryptoUtils.publicKeyFromPrivateKey(privateKey);
   const client = new Client(
