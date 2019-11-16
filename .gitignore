@@ -1,49 +1,18 @@
 # Loom Related
 loom
-loom_dev_privkey
-loom_dev_pubkey
-loom_private_key
-loomv2b_pk
-extdev_private_key
-mainnet_private_key
-loom_local_private_key
-loom_extdev_private_key
-loom_mainnet_private_key
 genesis.json
 app.db
 chaindata
 evm.db/
 receipts_db/
 
-# Rinkeby
-rinkeby_*
-
-# To prevent accidents
-*private_key
-private_key*
-*privatekey
-privatekey*
-*privateKey
-privateKey*
-*priv_key
-priv_key*
-*privkey
-privkey*
-*privKey
-privKey*
-
-*public_key
-public_key*
-*publickey
-publickey*
-*publicKey
-publicKey*
-*pub_key
-pub_key*
-*pubkey
-pubkey*
-*pubKey
-pubKey*
+# Dummy keys for testing purposes
+private/
+*private*
+*public*
+*mnemonic*
+*_account*
+*account_*
 
 # Created by https://www.gitignore.io/api/node,soliditytruffle
 # Edit at https://www.gitignore.io/?templates=node,soliditytruffle
