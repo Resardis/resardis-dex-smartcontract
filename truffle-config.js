@@ -96,8 +96,9 @@ module.exports = {
         }
       },
       network_id: '9545242630824', // eslint-disable-line
+      skipDryRun: false,
       confirmations: 2,
-      timeoutBlocks: 200,
+      timeoutBlocks: 300,
     },
 
     loom_mainnet: { // eslint-disable-line
