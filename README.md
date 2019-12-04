@@ -85,14 +85,26 @@ yarn lint:js:fix
 + Map extdev account to rinkeby account. This is only necessary when transferring from rinkeby to extdev, not the other way around: `node ./scripts/gateway-cli.js map-accounts`
 + Truffle migration should have already minted the coin on rinkeby. You can now use the following:
 ```shell
-# transfer 70 tokens to extdev PlasmaChain
+# transfer 70 tokens to transfer gateway
 node ./scripts/gateway-cli.js deposit-coin 70
 # check how many tokens you have on Rinkeby
 node ./scripts/gateway-cli.js coin-balance -c eth
 # check how many tokens you have on extdev
-node ./scripts/gateway-cli.js coin-balance
+node ./scripts/gateway-cli.js coin-balance -c extdev
+# transfer 12 ETH to transfer gateway
+node ./scripts/gateway-cli.js deposit-eth 12 --unit ether
+# check how many eth you have on Rinkeby
+node ./scripts/gateway-cli.js eth-balance -c eth
+# check how many eth you have on extdev
+node ./scripts/gateway-cli.js eth-balance -c extdev
+# check how many eth the Gateway holds on Rinkeby
+node ./scripts/gateway-cli.js eth-balance -a gateway -c eth
+# check how many eth the Gateway holds on extdev
+node ./scripts/gateway-cli.js eth-balance -a gateway -c extdev
 # check how many tokens the Gateway holds on Rinkeby
 node ./scripts/gateway-cli.js coin-balance -a gateway -c eth
+# check how many tokens the Gateway holds on extdev
+node ./scripts/gateway-cli.js coin-balance -a gateway -c extdev
 ```
 
 #### Unit Testing
