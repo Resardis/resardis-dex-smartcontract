@@ -1,8 +1,8 @@
 'use strict';
 
 const Resardis = artifacts.require('Resardis');
-const erc20 = artifacts.require('ERC20Mintable');
-const resToken = artifacts.require('ERC20Mintable2');
+const erc20 = artifacts.require('ERC20MintableX');
+const resToken = artifacts.require('ERC20MintableY');
 
 contract('TestResardis-Trading', async accounts => {
   let addressZero;
@@ -87,29 +87,29 @@ contract('TestResardis-Trading', async accounts => {
     const orderNonce = web3.utils.toBN(nonce);
     await dexInstance.order(
       tokenAddress, amountGet, addressZero, amountGive, expires,
-      orderNonce, { from: firstAccount, value: 0 }
+      orderNonce, { from: firstAccount, value: 0 },
     );
     const availableAfterOrder = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     const filledAfterOrder = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     // do trading
     await dexInstance.trade(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, tradeAmount, { from: secAccount, value: 0 }
+      firstAccount, tradeAmount, { from: secAccount, value: 0 },
     );
     // check the order volume again
     const availableAfterTrade = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     const filledAfterTrade = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
 
     const finTokenBalFirst = await dexInstance.balanceOf(tokenAddress, firstAccount, { from: firstAccount });
@@ -173,7 +173,7 @@ contract('TestResardis-Trading', async accounts => {
     try {
       await dexInstance.order(
         tokenAddress, amountGet, addressZero, amountGive, expires,
-        orderNonce, { from: firstAccount, value: 0 }
+        orderNonce, { from: firstAccount, value: 0 },
       );
     } catch (err) {
       console.log('Order could not have been given for a not-allowed token as expected.');
@@ -181,11 +181,11 @@ contract('TestResardis-Trading', async accounts => {
     // check how much of the order volume is available and/or filled
     const availableFirst = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     const filledFirst = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
 
     assert.notEqual(initBalance.toString(), finalBalance.toString());
@@ -214,30 +214,30 @@ contract('TestResardis-Trading', async accounts => {
     // place the order
     await dexInstance.order(
       tokenAddress, amountGet, addressZero, amountGive, expires,
-      orderNonce, { from: firstAccount, value: 0 }
+      orderNonce, { from: firstAccount, value: 0 },
     );
     // check how much of the order volume is available and/or filled
     const availableFirst = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     const filledFirst = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     // cancel the order
     await dexInstance.cancelOrder(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      { from: firstAccount, value: 0 }
+      { from: firstAccount, value: 0 },
     );
     // check order volume again
     const availableSecond = await dexInstance.availableVolume(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     const filledSecond = await dexInstance.amountFilled(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount }
+      firstAccount, { from: firstAccount },
     );
     assert.notEqual(initBalance.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());

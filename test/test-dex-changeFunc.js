@@ -1,7 +1,7 @@
 'use strict';
 
 const Resardis = artifacts.require('Resardis');
-const resToken = artifacts.require('ERC20Mintable2');
+const resToken = artifacts.require('ERC20MintableY');
 
 contract('TestResardis-ChangeFunctions', async accounts => {
   let putativeFeeMake;

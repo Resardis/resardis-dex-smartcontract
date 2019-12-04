@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "./safemath.sol";
-import "./token.sol";
+import "./vendor/SafeMath.sol";
+import "./vendor/IERC20.sol";
 
 contract Resardis {
     using SafeMath for uint256;
