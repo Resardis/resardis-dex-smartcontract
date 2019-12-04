@@ -24,6 +24,8 @@ const MyRinkebyCoinJSON = require('../build/contracts/ERC20MintableX.json');
 const MyTokenJSON = require('../build/contracts/ERC20Loom.json');
 const MyCoinJSON = require('../build/contracts/ERC20Loom.json');
 
+const ResardisJSON = require('../build/contracts/Resardis.json');
+
 const TransferGateway = Contracts.TransferGateway;
 const AddressMapper = Contracts.AddressMapper;
 const EthCoin = Contracts.EthCoin;
@@ -60,6 +62,57 @@ async function getRinkebyCoinBalance (web3js, accountAddress) {
 async function getRinkebyEthBalance (web3js, accountAddress) {
   const balance = await web3js.eth.getBalance(accountAddress);
   return balance;
+}
+
+async function getResardisContract (web3js) {
+  const networkId = await web3js.eth.net.getId();
+  return new web3js.eth.Contract(
+    ResardisJSON.abi,
+    ResardisJSON.networks[networkId].address,
+  );
+}
+
+async function getResardisContractAddress (web3js) {
+  const networkId = await web3js.eth.net.getId();
+  return ResardisJSON.networks[networkId].address;
+}
+
+async function getERC20LoomContract (web3js) {
+  const networkId = await web3js.eth.net.getId();
+  return new web3js.eth.Contract(
+    MyCoinJSON.abi,
+    MyCoinJSON.networks[networkId].address,
+  );
+}
+
+async function getERC20LoomContractAddress (web3js) {
+  const networkId = await web3js.eth.net.getId();
+  return MyCoinJSON.networks[networkId].address;
+}
+
+async function depositCoinToDex (web3js, amount, ownerAccount) {
+  const contract = await getResardisContract(web3js);
+  const contractAddress = await getResardisContractAddress(web3js);
+  const erc20Loom = await getERC20LoomContract(web3js);
+  const erc20LoomAddress = await getERC20LoomContractAddress(web3js);
+
+  const approvetx = await erc20Loom.methods
+    .approve(contractAddress, amount.toString())
+    .send({ from: ownerAccount });
+  console.log(approvetx);
+
+  const tx = await contract.methods.depositToken(erc20LoomAddress, amount.toString()).send({ from: ownerAccount });
+  return tx;
+}
+
+async function allowCoinOnDex (web3js, ownerAccount) {
+  const contract = await getResardisContract(web3js);
+  const contractAddress = await getResardisContractAddress(web3js);
+  const erc20Loom = await getERC20LoomContract(web3js);
+  const erc20LoomAddress = await getERC20LoomContractAddress(web3js);
+
+  const tx = await contract.methods.changeAllowedToken(erc20LoomAddress, true, true).send({ from: ownerAccount });
+  return tx;
 }
 
 async function depositCoinToRinkebyGateway (web3js, amount, ownerAccount, gas) {
@@ -498,6 +551,41 @@ async function mapAccounts ({ client, signer, ownerRinkebyAddress, ownerExtdevAd
   await mapperContract.addIdentityMappingAsync(ownerExtdevAddr, ownerRinkebyAddr, signer);
   console.log(`Mapped ${ownerExtdevAddr} to ${ownerRinkebyAddr}`);
 }
+
+program
+  .command('allow-coin-dex')
+  .description('Allow the dummy ERC20 contract on Dex, on the loom chain')
+  .action(async function () {
+    const { account, web3js, client } = loadExtdevAccount();
+    try {
+      const txHash = await allowCoinOnDex(
+        web3js, account,
+      );
+      console.log('Extdev tx hash:');
+      console.log(txHash);
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+program
+  .command('deposit-coin-dex <amount>')
+  .description('deposit the specified amount of ERC20 tokens into the Dex')
+  .action(async function (amount) {
+    const { account, web3js, client } = loadExtdevAccount();
+    try {
+      const actualAmount = new BN(amount).mul(coinMultiplier);
+      const txHash = await depositCoinToDex(
+        web3js, actualAmount, account,
+      );
+      console.log(`${amount} tokens deposited to Dex.`);
+      console.log('Extdev tx hash:');
+      console.log(txHash);
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
 
 program
   .command('deposit-coin <amount>')
