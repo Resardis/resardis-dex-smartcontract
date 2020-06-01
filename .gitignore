@@ -1,11 +1,3 @@
-# Loom Related
-loom
-genesis.json
-app.db
-chaindata
-evm.db/
-receipts_db/
-
 # Dummy keys for testing purposes
 private/
 *private*
