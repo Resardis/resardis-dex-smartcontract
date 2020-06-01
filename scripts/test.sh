@@ -47,8 +47,5 @@ start_ganache
 # echo "Deploying to ganache"
 # node_modules/.bin/truffle migrate --reset --network ganache_local
 
-# echo "Deploying to loom"
-# node_modules/.bin/truffle migrate --reset --network loom_local
-
 # Feed command line options to truffle test
 node_modules/.bin/truffle test "$@"

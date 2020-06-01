@@ -8,11 +8,10 @@
     "url": "https://github.com/kmotoko/resardis-smartcontract.git"
   },
   "bugs": "https://github.com/kmotoko/resardis-smartcontract/issues",
-  "license": "AGPL-3.0-or-later",
+  "license": "AGPL-3.0",
   "keywords": [
     "decentralized exchange",
     "decentralized cryptocurrency exchange",
-    "loom",
     "ethereum",
     "blockchain",
     "cryptocurrency"
@@ -45,13 +44,8 @@
     "lint:js:fix": "yarn eslint . --fix",
     "lint:sol": "yarn solium -d 'contracts/'",
     "lint:sol:fix": "yarn solium -d 'contracts/' --fix",
-    "get:loom": "bash ./scripts/get-loom.sh",
-    "get:loom:update": "bash ./scripts/update-loom.sh",
-    "gen:extdev-key": "bash ./scripts/generate-extdev-key.sh",
     "gen:rinkeby-key": "node ./scripts/generate-eth-key.js rinkeby",
     "deploy:ganache": "truffle migrate --reset --network ganache_local",
-    "deploy:loomchain": "truffle migrate --reset --network loom_dapp_chain",
-    "deploy:extdev": "truffle migrate --reset --network loom_extdev_plasma_us1",
     "deploy:rinkeby": "truffle migrate --reset --network rinkeby",
     "test": "bash scripts/test.sh --network ganache_local"
   },
@@ -61,8 +55,6 @@
   },
   "devDependencies": {
     "bip39": "^3.0.2",
-    "bn.js": "^5.0.0",
-    "commander": "^4.0.1",
     "eslint": "^6.6.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
@@ -70,15 +62,10 @@
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "ethereumjs-tx": "1.3.7",
     "ethereumjs-wallet": "^0.6.3",
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.7.0",
-    "js-sha256": "^0.9.0",
-    "loom-js": "1.70.1",
-    "loom-truffle-provider": "^0.13.0",
     "truffle": "^5.1.0",
-    "truffle-privatekey-provider": "^1.3.0",
-    "web3": "^1.2.2"
+    "truffle-privatekey-provider": "^1.3.0"
   }
 }
