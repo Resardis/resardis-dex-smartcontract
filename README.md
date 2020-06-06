@@ -96,3 +96,5 @@ manticore ./contracts/dex.sol
 myth analyze ./contracts/dex.sol --execution-timeout <sec> --max-depth <number>
 slither ./contracts/dex.sol
 ```
+#### Order
+function offer_user(uint amountGive, address tokenGive, uint amountGet, address tokenGet, uint pos) should be used for giving order.
