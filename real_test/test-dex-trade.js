@@ -85,16 +85,32 @@ contract('TestResardis-Trading', async accounts => {
     blockNumber = web3.utils.toBN(blockNumber);
     const expires = blockNumber.add(expiryIncrement);
     const orderNonce = web3.utils.toBN(nonce);
-    await dexInstance.offer_user(
-      tokenAddress, amountGet, addressZero, amountGive, { from: firstAccount, value: 0 },
+    await dexInstance.order(
+      tokenAddress, amountGet, addressZero, amountGive, expires,
+      orderNonce, { from: firstAccount, value: 0 },
     );
-
+    const availableAfterOrder = await dexInstance.availableVolume(
+      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
+      firstAccount, { from: firstAccount },
+    );
+    const filledAfterOrder = await dexInstance.amountFilled(
+      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
+      firstAccount, { from: firstAccount },
+    );
     // do trading
-    await dexInstance.offer_user(
+    await dexInstance.trade(
       tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
       firstAccount, tradeAmount, { from: secAccount, value: 0 },
     );
-
+    // check the order volume again
+    const availableAfterTrade = await dexInstance.availableVolume(
+      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
+      firstAccount, { from: firstAccount },
+    );
+    const filledAfterTrade = await dexInstance.amountFilled(
+      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
+      firstAccount, { from: firstAccount },
+    );
 
     const finTokenBalFirst = await dexInstance.balanceOf(tokenAddress, firstAccount, { from: firstAccount });
     const finEthBalFirst = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
@@ -137,7 +153,7 @@ contract('TestResardis-Trading', async accounts => {
       initTokenBalFeeAcc,
     };
   }
-/*
+
   it('Try to place an order and fail. Token not allowed.', async () => {
     // deposit some ETH
     const initBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
@@ -701,5 +717,4 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(out.finResTokenBalFeeAcc.toString(), out.initResTokenBalFeeAcc.add(doubleResTokenFee).toString());
     assert.notEqual(out.finResTokenBalFeeAcc.toString(), out.initResTokenBalFeeAcc.toString());
   });
-*/
 });
