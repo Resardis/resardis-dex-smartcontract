@@ -17,9 +17,8 @@
 
 pragma solidity ^0.5.12;
 
-import "ds-auth/auth.sol";
-
-import "./simple_market.sol";
+import "../vendor/dapphub/DSAuth.sol";
+import "./MarketBase.sol";
 
 // Simple Market with a market lifetime. When the close_time has been reached,
 // offers can only be cancelled (offer and buy will throw).
