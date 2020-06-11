@@ -45,7 +45,7 @@
     "lint:sol": "yarn solium -d 'contracts/'",
     "lint:sol:fix": "yarn solium -d 'contracts/' --fix",
     "gen:rinkeby-key": "node ./scripts/generate-eth-key.js rinkeby",
-    "deploy:ganache": "truffle migrate --reset --network ganache_local",
+    "deploy:ganache": "bash scripts/deploy-ganache.sh --reset --network ganache_local",
     "deploy:rinkeby": "truffle migrate --reset --network rinkeby",
     "test": "bash scripts/test.sh --network ganache_local"
   },
