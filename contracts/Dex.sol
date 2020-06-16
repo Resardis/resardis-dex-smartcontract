@@ -106,8 +106,8 @@ contract Resardis is SafeMath2{
     mapping(address => uint) public _dust;                      //minimum sell amount for a token to avoid dust offers
     mapping(uint => uint) public _near;         //next unsorted offer id
     uint _head;                                 //first unsorted offer id
-    uint public dustId;   
-    
+    uint public dustId;
+
     uint public last_offer_id;
 
     mapping (uint => OfferInfo) public offers;
@@ -120,14 +120,14 @@ contract Resardis is SafeMath2{
         address owner;
         uint64  timestamp;
     }
-    
+
     function _next_id()
         internal
         returns (uint)
     {
         last_offer_id++; return last_offer_id;
     }
-    
+
     function offer(uint amountGive, address tokenGive, uint amountGet, address tokenGet)
         public
         returns (uint id)
@@ -137,7 +137,7 @@ contract Resardis is SafeMath2{
         require(amountGive > 0);
         require(amountGet > 0);
         //require(tokenGive != tokenGet);
-        
+
         OfferInfo memory info;
         info.amountGive = amountGive;
         info.tokenGive = tokenGive;
@@ -156,7 +156,7 @@ contract Resardis is SafeMath2{
         return _buys(id, amount);
     }
 
-    
+
     //DDDDDDDDDDDD end
     function() external {
         revert();
@@ -291,29 +291,29 @@ contract Resardis is SafeMath2{
         public
         returns (bool)
     {
-        OfferInfo memory offer = offers[id];
-        uint spend = mul(amount, offer.amountGet) / offer.amountGive;
+        OfferInfo memory offerq = offers[id];
+        uint spend = mul(amount, offerq.amountGet) / offerq.amountGive;
 
         require(uint128(spend) == spend);
         require(uint128(amount) == amount);
         //amount is in amountGet terms
-        require(allowedDepositTokens[offer.tokenGet] == true && allowedDepositTokens[offer.tokenGive] == true);
-        
-        offers[id].amountGive = sub(offer.amountGive, amount);
-        offers[id].amountGet = sub(offer.amountGet, spend);
+        require(allowedDepositTokens[offerq.tokenGet] == true && allowedDepositTokens[offerq.tokenGive] == true);
+
+        offers[id].amountGive = sub(offerq.amountGive, amount);
+        offers[id].amountGet = sub(offerq.amountGet, spend);
          tradeBalances(
-            offer.tokenGet,
-            offer.amountGet,
-            offer.tokenGive,
-            offer.amountGive,
-            offer.owner,
+            offerq.tokenGet,
+            offerq.amountGet,
+            offerq.tokenGive,
+            offerq.amountGive,
+            offerq.owner,
             amount
         );
         if (offers[id].amountGive == 0) {
           delete offers[id];
         }
     }
-    
+
 
     function tradeBalances(
         address tokenGet,
@@ -367,9 +367,9 @@ contract Resardis is SafeMath2{
             tokens[tokenGive][msg.sender] = tokens[tokenGive][msg.sender].add(amountGive);
         }
     }
-/* MATCHER 
+/* MATCHER
 
-*/   
+*/
 
 
     function offer_user(
@@ -383,7 +383,7 @@ contract Resardis is SafeMath2{
     {
         return _offeru(amountGive, tokenGive, amountGet, tokenGet);
     }
-    
+
     // Make a new offer. Takes funds from the caller into market escrow.
     function offer_user(
         uint amountGive,    //maker (ask) sell how much
@@ -397,7 +397,7 @@ contract Resardis is SafeMath2{
     {
         return offer_user(amountGive, tokenGive, amountGet, tokenGet, pos, true);
     }
-    
+
     function offer_user(
         uint amountGive,    //maker (ask) sell how much
         address tokenGive,   //maker (ask) sell which token
@@ -412,7 +412,7 @@ contract Resardis is SafeMath2{
          return _matcho(amountGive, tokenGive, amountGet, tokenGet, pos, rounding);
 
     }
-    
+
         function getBestOffer(address sell_gem, address buy_gem) public view returns(uint) {
         return _best[address(sell_gem)][address(buy_gem)];
     }
@@ -458,18 +458,18 @@ contract Resardis is SafeMath2{
         return _rank[id].next != 0
                || _rank[id].prev != 0
                || _best[address(offers[id].tokenGive)][address(offers[id].tokenGet)] == id;
-    }  
-    
+    }
+
         function isActive(uint id) public view returns (bool active) {
         return offers[id].timestamp > 0;
     }
-    
+
 /*
-                                                                                              
- */   
-    
+
+ */
+
             // ---- Internal Functions ---- //
-    
+
     function _buys(uint id, uint amount)
         internal
         returns (bool)
@@ -485,7 +485,7 @@ contract Resardis is SafeMath2{
         require(tradeMatch(id, amount));
         return true;
     }
-   
+
     //find the id of the next higher offer after offers[id]
     function _find(uint id)
         internal
@@ -493,12 +493,12 @@ contract Resardis is SafeMath2{
         returns (uint)
     {
         require( id > 0 );
-    
+
         address tokenGet = address(offers[id].tokenGet);
         address tokenGive = address(offers[id].tokenGive);
         uint top = _best[tokenGive][tokenGet];
         uint old_top = 0;
-    
+
         // Find the larger-than-id order whose successor is less-than-id.
         while (top != 0 && _isPricedLtOrEq(id, top)) {
             old_top = top;
@@ -506,7 +506,7 @@ contract Resardis is SafeMath2{
         }
         return old_top;
     }
-    
+
     //find the id of the next higher offer after offers[id]
     function _findpos(uint id, uint pos)
         internal
@@ -514,22 +514,22 @@ contract Resardis is SafeMath2{
         returns (uint)
     {
         require(id > 0);
-    
+
         // Look for an active order.
         while (pos != 0 && !isActive(pos)) {
             pos = _rank[pos].prev;
         }
-    
+
         if (pos == 0) {
             //if we got to the end of list without a single active offer
             return _find(id);
-    
+
         } else {
             // if we did find a nearby active offer
             // Walk the order book down from there...
             if(_isPricedLtOrEq(id, pos)) {
                 uint old_pos;
-    
+
                 // Guaranteed to run at least once because of
                 // the prior if statements.
                 while (pos != 0 && _isPricedLtOrEq(id, pos)) {
@@ -537,7 +537,7 @@ contract Resardis is SafeMath2{
                     pos = _rank[pos].prev;
                 }
                 return old_pos;
-    
+
             // ...or walk it up.
             } else {
                 while (pos != 0 && !_isPricedLtOrEq(id, pos)) {
@@ -547,7 +547,7 @@ contract Resardis is SafeMath2{
             }
         }
     }
-    
+
     //return true if offers[low] priced less than or equal to offers[high]
     function _isPricedLtOrEq(
         uint low,   //lower priced offer's id
@@ -560,9 +560,9 @@ contract Resardis is SafeMath2{
         return mul(offers[low].amountGet, offers[high].amountGive)
           >= mul(offers[high].amountGet, offers[low].amountGive);
     }
-    
+
     //these variables are global only because of solidity local variable limit
-    
+
     //match offers with taker offer, and execute token transactions
     function _matcho(
         uint t_amountGive,    //taker sell how much
@@ -579,13 +579,13 @@ contract Resardis is SafeMath2{
         uint t_amountGet_old;    //taker buy how much saved
         uint m_amountGet;        //maker offer wants to buy this much token
         uint m_amountGive;        //maker offer wants to sell this much token
-    
+
         // there is at least one offer stored for token pair
         while (_best[address(t_tokenGet)][address(t_tokenGive)] > 0) {
             best_maker_id = _best[address(t_tokenGet)][address(t_tokenGive)];
             m_amountGet = offers[best_maker_id].amountGet;
             m_amountGive = offers[best_maker_id].amountGive;
-    
+
             // Ugly hack to work around rounding errors. Based on the idea that
             // the furthest the amounts can stray from their "true" values is 1.
             // Ergo the worst case has t_amountGive and m_amountGive at +1 away from
@@ -603,12 +603,12 @@ contract Resardis is SafeMath2{
             t_amountGet_old = t_amountGet;
             t_amountGet = sub(t_amountGet, min(m_amountGive, t_amountGet));
             t_amountGive = mul(t_amountGet, t_amountGive) / t_amountGet_old;
-    
+
             if (t_amountGive == 0 || t_amountGet == 0) {
                 break;
             }
         }
-    
+
         if (t_amountGet > 0 && t_amountGive > 0 && t_amountGive >= _dust[address(t_tokenGive)]) {
             //new offer should be created
             id =offer(t_amountGive, t_tokenGive, t_amountGet, t_tokenGet);
@@ -616,7 +616,7 @@ contract Resardis is SafeMath2{
             _sort(id, pos);
         }
     }
-    
+
     // Make a new offer without putting it in the sorted list.
     // Takes funds from the caller into market escrow.
     // ****Available to authorized contracts only!**********
@@ -635,7 +635,7 @@ contract Resardis is SafeMath2{
         _near[id] = _head;
         _head = id;
     }
-    
+
     //put offer into the sorted list
     function _sort(
         uint id,    //maker (ask) id
@@ -644,17 +644,17 @@ contract Resardis is SafeMath2{
         internal
     {
         require(isActive(id));
-    
+
         address tokenGet = offers[id].tokenGet;
         address tokenGive = offers[id].tokenGive;
         uint prev_id;                                      //maker (ask) id
-    
+
         pos = pos == 0 || offers[pos].tokenGive != tokenGive || offers[pos].tokenGet != tokenGet || !isOfferSorted(pos)
         ?
             _find(id)
         :
             _findpos(id, pos);
-    
+
         if (pos != 0) {                                    //offers[id] is not the highest offer
             //requirement below is satisfied by statements above
             //require(_isPricedLtOrEq(id, pos));
@@ -665,17 +665,17 @@ contract Resardis is SafeMath2{
             prev_id = _best[address(tokenGive)][address(tokenGet)];
             _best[address(tokenGive)][address(tokenGet)] = id;
         }
-    
+
         if (prev_id != 0) {                               //if lower offer does exist
             //requirement below is satisfied by statements above
             //require(!_isPricedLtOrEq(id, prev_id));
             _rank[prev_id].next = id;
             _rank[id].prev = prev_id;
         }
-    
+
         _span[address(tokenGive)][address(tokenGet)]++;
     }
-    
+
     // Remove offer from the sorted list (does not cancel offer)
     function _unsort(
         uint id    //id of maker (ask) offer to remove from sorted list
@@ -686,27 +686,27 @@ contract Resardis is SafeMath2{
         address tokenGet = address(offers[id].tokenGet);
         address tokenGive = address(offers[id].tokenGive);
         require(_span[tokenGive][tokenGet] > 0);
-    
+
         require(_rank[id].delb == 0 &&                    //assert id is in the sorted list
                  isOfferSorted(id));
-    
+
         if (id != _best[tokenGive][tokenGet]) {              // offers[id] is not the highest offer
             require(_rank[_rank[id].next].prev == id);
             _rank[_rank[id].next].prev = _rank[id].prev;
         } else {                                          //offers[id] is the highest offer
             _best[tokenGive][tokenGet] = _rank[id].prev;
         }
-    
+
         if (_rank[id].prev != 0) {                        //offers[id] is not the lowest offer
             require(_rank[_rank[id].prev].next == id);
             _rank[_rank[id].prev].next = _rank[id].next;
         }
-    
+
         _span[tokenGive][tokenGet]--;
         _rank[id].delb = block.number;                    //mark _rank[id] for deletion
         return true;
     }
-    
+
     //Hide offer from the unsorted order book (does not cancel offer)
     function _hide(
         uint id     //id of maker offer to remove from unsorted list
@@ -716,9 +716,9 @@ contract Resardis is SafeMath2{
     {
         uint uid = _head;               //id of an offer in unsorted offers list
         uint pre = uid;                 //id of previous offer in unsorted offers list
-    
+
         require(!isOfferSorted(id));    //make sure offer id is not in sorted offers list
-    
+
         if (_head == id) {              //check if offer is first offer in unsorted offers list
             _head = _near[id];          //set head to new first unsorted offer
             _near[id] = 0;              //delete order from unsorted order list

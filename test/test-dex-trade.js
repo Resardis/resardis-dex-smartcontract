@@ -91,9 +91,9 @@ contract('TestResardis-Trading', async accounts => {
 
     // do trading
     await dexInstance.offer_user(
-      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, tradeAmount, { from: secAccount, value: 0 },
-    );
+      amountGive, tokenAddress, amountGet, addressZero,
+      0, { from: secAccount, value: 0 },
+      );
 
 
     const finTokenBalFirst = await dexInstance.balanceOf(tokenAddress, firstAccount, { from: firstAccount });
@@ -137,49 +137,21 @@ contract('TestResardis-Trading', async accounts => {
       initTokenBalFeeAcc,
     };
   }
-/*
-  it('Try to place an order and fail. Token not allowed.', async () => {
-    // deposit some ETH
-    const initBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
-    await dexInstance.deposit({ from: firstAccount, value: depAmountEth });
-    const finalBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
-    const supposedBalance = initBalance.add(depAmountEth);
-    // disallow ETH and the token for deposits/trading/ordering
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, false, false, { from: currentAdmin });
-    await dexInstance.changeAllowedToken(addressZero, false, false, { from: currentAdmin });
-    // Order to be expired after X blocks from the last block
-    let blockNumber = await web3.eth.getBlockNumber();
-    blockNumber = web3.utils.toBN(blockNumber);
-    const expires = blockNumber.add(expiryIncrement);
-    const orderNonce = web3.utils.toBN('1');
+
+
     // place the order
-    try {
-      await dexInstance.order(
-        tokenAddress, amountGet, addressZero, amountGive, expires,
-        orderNonce, { from: firstAccount, value: 0 },
-      );
-    } catch (err) {
-      console.log('Order could not have been given for a not-allowed token as expected.');
-    }
+    //await dexInstance.offer_user(
+    //  amountGive, tokenAddress, amountGet, addressZero,
+    //  0, { from: secAccount, value: 0 },
+    //  );
     // check how much of the order volume is available and/or filled
-    const availableFirst = await dexInstance.availableVolume(
-      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount },
-    );
-    const filledFirst = await dexInstance.amountFilled(
-      tokenAddress, amountGet, addressZero, amountGive, expires, orderNonce,
-      firstAccount, { from: firstAccount },
-    );
+    //const availableFirst = await dexInstance.offers(
+    //  1, { from: firstAccount },
+    //);
 
-    assert.notEqual(initBalance.toString(), finalBalance.toString());
-    assert.equal(depAmountEth.toString(), finalBalance.toString());
-    assert.equal(supposedBalance.toString(), finalBalance.toString());
-    assert.notEqual(availableFirst.toString(), amountGet.toString());
-    assert.equal(availableFirst.toString(), (web3.utils.toBN('0')).toString());
-    assert.equal(filledFirst.toString(), (web3.utils.toBN('0')).toString());
-  });
 
+
+/*
   it('Place an order, cancel it, and succeed. No fee option set.', async () => {
     // deposit some ETH
     const initBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
@@ -392,7 +364,7 @@ contract('TestResardis-Trading', async accounts => {
     assert.notEqual(out.finTokenBalFeeAcc.toString(), out.initTokenBalFeeAcc.toString());
     assert.equal(out.finResTokenBalFeeAcc.toString(), out.initResTokenBalFeeAcc.toString());
   });
-
+/*
   it('Place an order, do trading, and succeed. Non-zero-fee. Fees as Resardis Token for ETH giver.', async () => {
     // change the no-fee period
     const currentAdmin = await dexInstance.admin.call();
