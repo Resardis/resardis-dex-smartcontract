@@ -305,7 +305,7 @@ contract Resardis is SafeMath2{
             offerq.tokenGet,
             offerq.amountGet,
             offerq.tokenGive,
-            offerq.amountGive,
+            spend,
             offerq.owner,
             amount
         );
