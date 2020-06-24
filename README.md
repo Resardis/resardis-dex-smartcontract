@@ -98,3 +98,6 @@ slither ./contracts/dex.sol
 ```
 #### Order
 function offer_user(uint amountGive, address tokenGive, uint amountGet, address tokenGet, uint pos) should be used for giving order.
+
+
+Çatay order verirkenki güvenlik kısımlarında can_offer modifier'ı yok. Reentrancy atak blogu yok bide dust engelleme yok. bence sadece can_offer modifier'ı eklesek yeter ? zaten reentrancy güvenliğini kontrat sağlıyor ? bide dust olsun nolcakki ? millet aşırı kucuk order girsin
