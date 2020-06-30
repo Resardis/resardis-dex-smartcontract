@@ -17,6 +17,7 @@
 
 pragma solidity ^0.5.12;
 
+import "../EternalStorage.sol"
 import "../vendor/dapphub/DSMath.sol";
 import "../vendor/openzeppelin/IERC20.sol";
 
@@ -71,7 +72,7 @@ contract EventfulMarket {
     );
 }
 
-contract SimpleMarket is EventfulMarket, DSMath {
+contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
 
     uint public last_offer_id;
 
