@@ -72,6 +72,7 @@ contract EventfulMarket {
     );
 }
 
+// @TODO: Check contract inheritence in Solidity
 contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
 
     uint public last_offer_id;
@@ -157,6 +158,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
 
         require(uint128(spend) == spend);
         require(uint128(quantity) == quantity);
+        require(add(tokensInUse[offer.buy_gem][msg.sender], spend) <= tokens[offer.buy_gem][msg.sender]);
 
         // For backwards semantic compatibility.
         if (quantity == 0 || spend == 0 ||
@@ -167,8 +169,14 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
 
         offers[id].pay_amt = sub(offer.pay_amt, quantity);
         offers[id].buy_amt = sub(offer.buy_amt, spend);
-        require( offer.buy_gem.transferFrom(msg.sender, offer.owner, spend) );
-        require( offer.pay_gem.transfer(msg.sender, quantity) );
+
+        // @TODO: Check Re-entrancy for msg.sender
+        tokensInUse[offer.pay_gem][offer.owner] = sub(tokensInUse[offer.pay_gem][offer.owner], quantity);
+
+        tokens[offer.buy_gem][msg.sender] = sub(tokens[offer.buy_gem][msg.sender], spend);
+        tokens[offer.pay_gem][msg.sender] = add(tokens[offer.pay_gem][msg.sender], quantity);
+        tokens[offer.buy_gem][offer.owner] = add(tokens[offer.buy_gem][offer.owner], spend);
+        tokens[offer.pay_gem][offer.owner] = sub(tokens[offer.pay_gem][offer.owner], quantity);
 
         emit LogItemUpdate(id);
         emit LogTake(
@@ -202,7 +210,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         OfferInfo memory offer = offers[id];
         delete offers[id];
 
-        require( offer.pay_gem.transfer(offer.owner, offer.pay_amt) );
+        tokensInUse[offer.pay_gem][offer.owner] = sub(tokensInUse[offer.pay_gem][offer.owner], offer.pay_amt);
 
         emit LogItemUpdate(id);
         emit LogKill(
@@ -247,10 +255,13 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         require(uint128(pay_amt) == pay_amt);
         require(uint128(buy_amt) == buy_amt);
         require(pay_amt > 0);
+        // @TODO: Why below cannot be true??
         require(pay_gem != IERC20(0x0));
         require(buy_amt > 0);
+        // @TODO: Why below cannot be true??
         require(buy_gem != IERC20(0x0));
         require(pay_gem != buy_gem);
+        require(add(tokensInUse[pay_gem][msg.sender], pay_amt) <= tokens[pay_gem][msg.sender]);
 
         OfferInfo memory info;
         info.pay_amt = pay_amt;
@@ -262,7 +273,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         id = _next_id();
         offers[id] = info;
 
-        require( pay_gem.transferFrom(msg.sender, address(this), pay_amt) );
+        tokensInUse[pay_gem][msg.sender] = add(tokensInUse[pay_gem][msg.sender], pay_amt);
 
         emit LogItemUpdate(id);
         emit LogMake(
