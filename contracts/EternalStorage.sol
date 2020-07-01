@@ -96,4 +96,24 @@ contract EternalStorage is DSMath {
     function balanceOf(address token, address user) external view returns (uint) {
         return tokens[token][user];
     }
+
+    function getAllowedDepositToken(address token_) external view returns(bool) {
+        return allowedDepositTokens[token_];
+    }
+
+    function getAllowedWithdrawToken(address token_) external view returns(bool) {
+        return allowedWithdrawTokens[token_];
+    }
+
+    function changeAllowedToken(
+        address token_,
+        bool depositPermit_,
+        bool withdrawPermit_
+    )
+        external
+    {
+        require(msg.sender == admin);
+        allowedDepositTokens[token_] = depositPermit_;
+        allowedWithdrawTokens[token_] = withdrawPermit_;
+    }
 }
