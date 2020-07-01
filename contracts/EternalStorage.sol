@@ -92,4 +92,8 @@ contract EternalStorage is DSMath {
             tokens[token][msg.sender]
         );
     }
+
+    function balanceOf(address token, address user) external view returns (uint) {
+        return tokens[token][user];
+    }
 }

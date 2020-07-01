@@ -4,7 +4,7 @@ import "./vendor/openzeppelin/IERC20.sol";
 
 import "./EternalStorage.sol";
 
-contract Resardis is EternalStorage {
+contract RemainingFuncResardis is EternalStorage {
     event UserChangeFeeOption(address user, bool userfeeOption);
 
     constructor(
@@ -94,10 +94,6 @@ contract Resardis is EternalStorage {
         require(msg.sender == admin);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
-    }
-
-    function balanceOf(address token, address user) external view returns (uint) {
-        return tokens[token][user];
     }
 
 }
