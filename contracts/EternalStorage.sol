@@ -1,6 +1,20 @@
 pragma solidity ^0.5.0;
 
 contract EternalStorage {
+    event Deposit(
+        address token,
+        address user,
+        uint amount,
+        uint balance
+    );
+
+    event Withdraw(
+        address token,
+        address user,
+        uint amount,
+        uint balance
+    );
+
     address public admin; //the admin address
     address public feeAccount; //the account that will receive fees
     address public resardisToken;
@@ -8,8 +22,11 @@ contract EternalStorage {
     uint public feeTake; //percentage times (1 ether)
     uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
     uint public resardisTokenFee;
-    //mapping of token addresses to mapping of account balances (token=0 means Ether)
+    //mapping of token addresses to mapping of total account balances (token=0 means Ether)
     mapping (address => mapping (address => uint)) public tokens;
+    //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
+    //locked = in use = this amount of tokens is currently in order book
+    mapping (address => mapping (address => uint)) public tokensInUse
     //mapping of user accounts to mapping of order hashes to booleans
     //true = submitted by user, equivalent to offchain signature)
     mapping (address => mapping (bytes32 => bool)) public orders;
