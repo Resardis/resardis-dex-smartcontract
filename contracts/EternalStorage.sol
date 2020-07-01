@@ -1,6 +1,8 @@
 pragma solidity ^0.5.0;
 
-contract EternalStorage {
+import "./vendor/dapphub/DSMath.sol";
+
+contract EternalStorage is DSMath {
     event Deposit(
         address token,
         address user,
@@ -27,12 +29,6 @@ contract EternalStorage {
     //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
     //locked = in use = this amount of tokens is currently in order book
     mapping (address => mapping (address => uint)) public tokensInUse
-    //mapping of user accounts to mapping of order hashes to booleans
-    //true = submitted by user, equivalent to offchain signature)
-    mapping (address => mapping (bytes32 => bool)) public orders;
-    //mapping of user accounts to mapping of order hashes to uints
-    //amount of order that has been filled)
-    mapping (address => mapping (bytes32 => uint)) public orderFills;
     //mapping of user accounts to mapping of fee payment option
     //0 = pays ether as a fee, 1 = pays resardiscoin as a fee.
     mapping (address => bool) public feeOption;
@@ -44,7 +40,7 @@ contract EternalStorage {
     mapping (address => bool) public allowedWithdrawTokens;
 
     function deposit() external payable {
-        tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].add(msg.value);
+        tokens[address(0)][msg.sender] = add(tokens[address(0)][msg.sender], msg.value);
         emit Deposit(
             address(0),
             msg.sender,
@@ -55,7 +51,7 @@ contract EternalStorage {
 
     function withdraw(uint amount) external {
         require(tokens[address(0)][msg.sender] >= amount);
-        tokens[address(0)][msg.sender] = tokens[address(0)][msg.sender].sub(amount);
+        tokens[address(0)][msg.sender] = sub(tokens[address(0)][msg.sender], amount);
         msg.sender.transfer(amount);
         emit Withdraw(
             address(0),
@@ -70,7 +66,7 @@ contract EternalStorage {
         //or this contract will not be able to do the transfer on your behalf.
         require(token!=address(0));
         require(allowedDepositTokens[token] == true);
-        tokens[token][msg.sender] = tokens[token][msg.sender].add(amount);
+        tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
         require(IERC20(token).transferFrom(msg.sender, address(this), amount));
         emit Deposit(
             token,
@@ -84,7 +80,7 @@ contract EternalStorage {
         require(token!=address(0));
         require(allowedWithdrawTokens[token] == true);
         require(tokens[token][msg.sender] >= amount);
-        tokens[token][msg.sender] = tokens[token][msg.sender].sub(amount);
+        tokens[token][msg.sender] = sub(tokens[token][msg.sender], amount);
         require(IERC20(token).transfer(msg.sender, amount));
         emit Withdraw(
             token,
