@@ -118,8 +118,9 @@ module.exports = {
       docker: false, // Use "x.x.x" you've installed locally with docker (default: false)
       settings: { // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
-          enabled: false,
-          // runs: 1000,
+          enabled: true,
+          // @TODO: increase the optimizer as much as possible (256 bit integer?)
+          runs: 1000,
         },
         evmVersion: 'petersburg', // also check solc version for compatibility
       },
