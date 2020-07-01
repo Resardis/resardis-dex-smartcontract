@@ -48,9 +48,6 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     uint public dustId;                         // id of the latest offer marked as dust
 
 
-    constructor(uint64 close_time) ExpiringMarket(close_time) public {
-    }
-
     // After close, anyone can cancel an offer
     modifier can_cancel(uint id) {
         require(isActive(id), "Offer was deleted or taken, or never existed.");

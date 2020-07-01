@@ -47,12 +47,6 @@ contract ExpiringMarket is DSAuth, SimpleMarket {
         _;
     }
 
-    constructor(uint64 _close_time)
-        public
-    {
-        close_time = _close_time;
-    }
-
     function isClosed() public view returns (bool closed) {
         return stopped || getTime() > close_time;
     }
