@@ -4,7 +4,7 @@ import "./vendor/openzeppelin/IERC20.sol";
 
 import "./EternalStorage.sol";
 
-contract Resardis {
+contract Resardis is EternalStorage {
     event UserChangeFeeOption(address user, bool userfeeOption);
 
     constructor(

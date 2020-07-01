@@ -1,5 +1,6 @@
 pragma solidity ^0.5.0;
 
+import "./vendor/openzeppelin/IERC20.sol";
 import "./vendor/dapphub/DSMath.sol";
 
 contract EternalStorage is DSMath {
@@ -24,11 +25,13 @@ contract EternalStorage is DSMath {
     uint public feeTake; //percentage times (1 ether)
     uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
     uint public resardisTokenFee;
+    // @TODO: Can we use IERC20 type instead of address (implicit conversion error)
     //mapping of token addresses to mapping of total account balances (token=0 means Ether)
     mapping (address => mapping (address => uint)) public tokens;
+    // @TODO: Can we use IERC20 type instead of address (implicit conversion error)
     //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
     //locked = in use = this amount of tokens is currently in order book
-    mapping (address => mapping (address => uint)) public tokensInUse
+    mapping (address => mapping (address => uint)) public tokensInUse;
     //mapping of user accounts to mapping of fee payment option
     //0 = pays ether as a fee, 1 = pays resardiscoin as a fee.
     mapping (address => bool) public feeOption;

@@ -17,7 +17,7 @@
 
 pragma solidity ^0.5.12;
 
-import "../EternalStorage.sol"
+import "../EternalStorage.sol";
 import "../vendor/dapphub/DSMath.sol";
 import "../vendor/openzeppelin/IERC20.sol";
 
@@ -73,7 +73,8 @@ contract EventfulMarket {
 }
 
 // @TODO: Check contract inheritence in Solidity
-contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
+// @TODO: DSMath was removed as it is imported in EternalStorage
+contract SimpleMarket is EternalStorage, EventfulMarket {
 
     uint public last_offer_id;
 
@@ -158,7 +159,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
 
         require(uint128(spend) == spend);
         require(uint128(quantity) == quantity);
-        require(add(tokensInUse[offer.buy_gem][msg.sender], spend) <= tokens[offer.buy_gem][msg.sender]);
+        require(add(tokensInUse[address(offer.buy_gem)][msg.sender], spend) <= tokens[address(offer.buy_gem)][msg.sender]);
 
         // For backwards semantic compatibility.
         if (quantity == 0 || spend == 0 ||
@@ -171,12 +172,12 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         offers[id].buy_amt = sub(offer.buy_amt, spend);
 
         // @TODO: Check Re-entrancy for msg.sender
-        tokensInUse[offer.pay_gem][offer.owner] = sub(tokensInUse[offer.pay_gem][offer.owner], quantity);
+        tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], quantity);
 
-        tokens[offer.buy_gem][msg.sender] = sub(tokens[offer.buy_gem][msg.sender], spend);
-        tokens[offer.pay_gem][msg.sender] = add(tokens[offer.pay_gem][msg.sender], quantity);
-        tokens[offer.buy_gem][offer.owner] = add(tokens[offer.buy_gem][offer.owner], spend);
-        tokens[offer.pay_gem][offer.owner] = sub(tokens[offer.pay_gem][offer.owner], quantity);
+        tokens[address(offer.buy_gem)][msg.sender] = sub(tokens[address(offer.buy_gem)][msg.sender], spend);
+        tokens[address(offer.pay_gem)][msg.sender] = add(tokens[address(offer.pay_gem)][msg.sender], quantity);
+        tokens[address(offer.buy_gem)][offer.owner] = add(tokens[address(offer.buy_gem)][offer.owner], spend);
+        tokens[address(offer.pay_gem)][offer.owner] = sub(tokens[address(offer.pay_gem)][offer.owner], quantity);
 
         emit LogItemUpdate(id);
         emit LogTake(
@@ -210,7 +211,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         OfferInfo memory offer = offers[id];
         delete offers[id];
 
-        tokensInUse[offer.pay_gem][offer.owner] = sub(tokensInUse[offer.pay_gem][offer.owner], offer.pay_amt);
+        tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], offer.pay_amt);
 
         emit LogItemUpdate(id);
         emit LogKill(
@@ -261,7 +262,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         // @TODO: Why below cannot be true??
         require(buy_gem != IERC20(0x0));
         require(pay_gem != buy_gem);
-        require(add(tokensInUse[pay_gem][msg.sender], pay_amt) <= tokens[pay_gem][msg.sender]);
+        require(add(tokensInUse[address(pay_gem)][msg.sender], pay_amt) <= tokens[address(pay_gem)][msg.sender]);
 
         OfferInfo memory info;
         info.pay_amt = pay_amt;
@@ -273,7 +274,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket, DSMath {
         id = _next_id();
         offers[id] = info;
 
-        tokensInUse[pay_gem][msg.sender] = add(tokensInUse[pay_gem][msg.sender], pay_amt);
+        tokensInUse[address(pay_gem)][msg.sender] = add(tokensInUse[address(pay_gem)][msg.sender], pay_amt);
 
         emit LogItemUpdate(id);
         emit LogMake(
