@@ -29,8 +29,8 @@ contract EventfulMarket {
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        IERC20             pay_gem,
-        IERC20             buy_gem,
+        address             pay_gem,
+        address             buy_gem,
         uint128           pay_amt,
         uint128           buy_amt,
         uint64            timestamp
@@ -40,8 +40,8 @@ contract EventfulMarket {
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        IERC20             pay_gem,
-        IERC20             buy_gem,
+        address             pay_gem,
+        address             buy_gem,
         uint128           pay_amt,
         uint128           buy_amt,
         uint64            timestamp
@@ -51,8 +51,8 @@ contract EventfulMarket {
         bytes32           id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        IERC20             pay_gem,
-        IERC20             buy_gem,
+        address             pay_gem,
+        address             buy_gem,
         address  indexed  taker,
         uint128           take_amt,
         uint128           give_amt,
@@ -63,8 +63,8 @@ contract EventfulMarket {
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        IERC20             pay_gem,
-        IERC20             buy_gem,
+        address             pay_gem,
+        address             buy_gem,
         uint128           pay_amt,
         uint128           buy_amt,
         uint64            timestamp
@@ -83,9 +83,9 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     struct OfferInfo {
         uint     pay_amt;
-        IERC20    pay_gem;
+        address    pay_gem;
         uint     buy_amt;
-        IERC20    buy_gem;
+        address    buy_gem;
         address  owner;
         uint64   timestamp;
     }
@@ -120,7 +120,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return offers[id].owner;
     }
 
-    function getOffer(uint id) public view returns (uint, IERC20, uint, IERC20) {
+    function getOffer(uint id) public view returns (uint, address, uint, address) {
       OfferInfo memory offer = offers[id];
       return (offer.pay_amt, offer.pay_gem,
               offer.buy_amt, offer.buy_gem);
@@ -234,8 +234,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     function make(
-        IERC20    pay_gem,
-        IERC20    buy_gem,
+        address    pay_gem,
+        address    buy_gem,
         uint128  pay_amt,
         uint128  buy_amt
     )
@@ -246,7 +246,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
-    function offer(uint pay_amt, IERC20 pay_gem, uint buy_amt, IERC20 buy_gem)
+    function offer(uint pay_amt, address pay_gem, uint buy_amt, address buy_gem)
         public
         can_offer
         synchronized
@@ -256,10 +256,10 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         require(uint128(buy_amt) == buy_amt);
         require(pay_amt > 0);
         // @TODO: Why below cannot be true??
-        require(pay_gem != IERC20(0x0));
+        // require(pay_gem != IERC20(0x0));
         require(buy_amt > 0);
         // @TODO: Why below cannot be true??
-        require(buy_gem != IERC20(0x0));
+        // require(buy_gem != IERC20(0x0));
         require(pay_gem != buy_gem);
         require(add(tokensInUse[address(pay_gem)][msg.sender], pay_amt) <= tokens[address(pay_gem)][msg.sender]);
 

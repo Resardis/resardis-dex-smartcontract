@@ -61,8 +61,8 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     // ---- Public entrypoints ---- //
 
     function make(
-        IERC20    pay_gem,
-        IERC20    buy_gem,
+        address    pay_gem,
+        address    buy_gem,
         uint128  pay_amt,
         uint128  buy_amt
     )
@@ -96,24 +96,24 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //
     function offer(
         uint pay_amt,    //maker (ask) sell how much
-        IERC20 pay_gem,   //maker (ask) sell which token
+        address pay_gem,   //maker (ask) sell which token
         uint buy_amt,    //taker (ask) buy how much
-        IERC20 buy_gem    //taker (ask) buy which token
+        address buy_gem    //taker (ask) buy which token
     )
         public
         returns (uint)
     {
         require(!locked, "Reentrancy attempt");
-        function (uint256,IERC20,uint256,IERC20) returns (uint256) fn = matchingEnabled ? _offeru : super.offer;
+        function (uint256,address,uint256,address) returns (uint256) fn = matchingEnabled ? _offeru : super.offer;
         return fn(pay_amt, pay_gem, buy_amt, buy_gem);
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
     function offer(
         uint pay_amt,    //maker (ask) sell how much
-        IERC20 pay_gem,   //maker (ask) sell which token
+        address pay_gem,   //maker (ask) sell which token
         uint buy_amt,    //maker (ask) buy how much
-        IERC20 buy_gem,   //maker (ask) buy which token
+        address buy_gem,   //maker (ask) buy which token
         uint pos         //position to insert offer, 0 should be used if unknown
     )
         public
@@ -125,9 +125,9 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
 
     function offer(
         uint pay_amt,    //maker (ask) sell how much
-        IERC20 pay_gem,   //maker (ask) sell which token
+        address pay_gem,   //maker (ask) sell which token
         uint buy_amt,    //maker (ask) buy how much
-        IERC20 buy_gem,   //maker (ask) buy which token
+        address buy_gem,   //maker (ask) buy which token
         uint pos,        //position to insert offer, 0 should be used if unknown
         bool rounding    //match "close enough" orders?
     )
@@ -210,7 +210,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //    cost more gas to accept the offer, than the value
     //    of tokens received.
     function setMinSell(
-        IERC20 pay_gem,     //token to assign minimum sell amount to
+        address pay_gem,     //token to assign minimum sell amount to
         uint dust          //maker (ask) minimum sell amount
     )
         public
@@ -225,7 +225,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
 
     //returns the minimum sell amount for an offer
     function getMinSell(
-        IERC20 pay_gem      //token for which minimum sell amount is queried
+        address pay_gem      //token for which minimum sell amount is queried
     )
         public
         view
@@ -257,7 +257,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //return the best offer for a token pair
     //      the best offer is the lowest one if it's an ask,
     //      and highest one if it's a bid offer
-    function getBestOffer(IERC20 sell_gem, IERC20 buy_gem) public view returns(uint) {
+    function getBestOffer(address sell_gem, address buy_gem) public view returns(uint) {
         return _best[address(sell_gem)][address(buy_gem)];
     }
 
@@ -279,7 +279,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     }
 
     //return the amount of better offers for a token pair
-    function getOfferCount(IERC20 sell_gem, IERC20 buy_gem) public view returns(uint) {
+    function getOfferCount(address sell_gem, address buy_gem) public view returns(uint) {
         return _span[address(sell_gem)][address(buy_gem)];
     }
 
@@ -304,7 +304,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
                || _best[address(offers[id].pay_gem)][address(offers[id].buy_gem)] == id;
     }
 
-    function sellAllAmount(IERC20 pay_gem, uint pay_amt, IERC20 buy_gem, uint min_fill_amount)
+    function sellAllAmount(address pay_gem, uint pay_amt, address buy_gem, uint min_fill_amount)
         public
         returns (uint fill_amt)
     {
@@ -332,7 +332,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         require(fill_amt >= min_fill_amount);
     }
 
-    function buyAllAmount(IERC20 buy_gem, uint buy_amt, IERC20 pay_gem, uint max_fill_amount)
+    function buyAllAmount(address buy_gem, uint buy_amt, address pay_gem, uint max_fill_amount)
         public
         returns (uint fill_amt)
     {
@@ -359,7 +359,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         require(fill_amt <= max_fill_amount);
     }
 
-    function getBuyAmount(IERC20 buy_gem, IERC20 pay_gem, uint pay_amt) public view returns (uint fill_amt) {
+    function getBuyAmount(address buy_gem, address pay_gem, uint pay_amt) public view returns (uint fill_amt) {
         uint256 offerId = getBestOffer(buy_gem, pay_gem);           //Get best offer for the token pair
         while (pay_amt > offers[offerId].buy_amt) {
             fill_amt = add(fill_amt, offers[offerId].pay_amt);  //Add amount to buy accumulator
@@ -372,7 +372,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         fill_amt = add(fill_amt, rmul(pay_amt * 10 ** 9, rdiv(offers[offerId].pay_amt, offers[offerId].buy_amt)) / 10 ** 9); //Add proportional amount of last offer to buy accumulator
     }
 
-    function getPayAmount(IERC20 pay_gem, IERC20 buy_gem, uint buy_amt) public view returns (uint fill_amt) {
+    function getPayAmount(address pay_gem, address buy_gem, uint buy_amt) public view returns (uint fill_amt) {
         uint256 offerId = getBestOffer(buy_gem, pay_gem);           //Get best offer for the token pair
         while (buy_amt > offers[offerId].pay_amt) {
             fill_amt = add(fill_amt, offers[offerId].buy_amt);  //Add amount to pay accumulator
@@ -489,9 +489,9 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     //match offers with taker offer, and execute token transactions
     function _matcho(
         uint t_pay_amt,    //taker sell how much
-        IERC20 t_pay_gem,   //taker sell which token
+        address t_pay_gem,   //taker sell which token
         uint t_buy_amt,    //taker buy how much
-        IERC20 t_buy_gem,   //taker buy which token
+        address t_buy_gem,   //taker buy which token
         uint pos,          //position id
         bool rounding      //match "close enough" orders?
     )
@@ -546,9 +546,9 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     // Keepers should call insert(id,pos) to put offer in the sorted list.
     function _offeru(
         uint pay_amt,      //maker (ask) sell how much
-        IERC20 pay_gem,     //maker (ask) sell which token
+        address pay_gem,     //maker (ask) sell which token
         uint buy_amt,      //maker (ask) buy how much
-        IERC20 buy_gem      //maker (ask) buy which token
+        address buy_gem      //maker (ask) buy which token
     )
         internal
         returns (uint id)
@@ -569,8 +569,8 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     {
         require(isActive(id));
 
-        IERC20 buy_gem = offers[id].buy_gem;
-        IERC20 pay_gem = offers[id].pay_gem;
+        address buy_gem = offers[id].buy_gem;
+        address pay_gem = offers[id].pay_gem;
         uint prev_id;                                      //maker (ask) id
 
         pos = pos == 0 || offers[pos].pay_gem != pay_gem || offers[pos].buy_gem != buy_gem || !isOfferSorted(pos)
