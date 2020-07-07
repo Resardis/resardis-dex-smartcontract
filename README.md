@@ -96,3 +96,13 @@ manticore ./contracts/dex.sol
 myth analyze ./contracts/dex.sol --execution-timeout <sec> --max-depth <number>
 slither ./contracts/dex.sol
 ```
+#### TODO
++ The old markets use dsmath. Ensure that math ops are done using uint256. Also, I have seen places where "/" is used instead of div.
++ In expiring market, DSauth is only used once (auth modifier). Verify that. If so, might want to replace it with something simpler.
+Last: Check chained import references in expiring and matching.
++ Array of dynamic size vs static size and gas relation.
++ Cancel/kill offer and new offer variables.
++ Offer Position-dependent testing.
++ lastOffersHistoryIndex does not work as expected. It is actually not the last, but last + 1.
++ Allowed disallowed token code parts and tests.
++ Owner vs user name convention in parameters and returns.
