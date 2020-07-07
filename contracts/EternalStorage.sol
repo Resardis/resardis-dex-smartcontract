@@ -19,12 +19,35 @@ contract EternalStorage is DSMath {
     );
 
     address public admin; //the admin address
-    address public feeAccount; //the account that will receive fees
-    address public resardisToken;
-    uint public feeMake; //percentage times (1 ether)
-    uint public feeTake; //percentage times (1 ether)
-    uint public noFeeUntil; // UNIX timestamp, no fee charged until that time
-    uint public resardisTokenFee;
+
+    // OfferInfo is used in volatile offer book
+    // Items in the book can get deleted to ease iteration
+    struct OfferInfo {
+        uint     pay_amt;
+        address    pay_gem;
+        uint     buy_amt;
+        address    buy_gem;
+        address  owner;
+        uint64   timestamp;
+    }
+
+    // OfferInfoHistory is an extension to OfferInfo
+    // Used in permanent order history book
+    // of which no element gets ever deleted
+    struct OfferInfoHistory {
+        uint     pay_amt;
+        address    pay_gem;
+        uint     buy_amt;
+        address    buy_gem;
+        address  owner;
+        uint64   timestamp;
+        uint id;
+        bool cancelled;
+        bool filled;
+        uint filledPayAmt;
+        uint filledBuyAmt;
+    }
+
     // @TODO: Can we use IERC20 type instead of address (implicit conversion error)
     //mapping of token addresses to mapping of total account balances (token=0 means Ether)
     mapping (address => mapping (address => uint)) public tokens;
@@ -32,9 +55,14 @@ contract EternalStorage is DSMath {
     //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
     //locked = in use = this amount of tokens is currently in order book
     mapping (address => mapping (address => uint)) public tokensInUse;
-    //mapping of user accounts to mapping of fee payment option
-    //0 = pays ether as a fee, 1 = pays resardiscoin as a fee.
-    mapping (address => bool) public feeOption;
+    //mapping of user accounts to mapping of OfferInfoHistory array
+    mapping (address => OfferInfoHistory[]) public offersHistory;
+    //mapping of user accounts to the (last index no of offersHistory + 1)
+    //thus the actual last index is -1
+    mapping (address => uint) public lastOffersHistoryIndex;
+    //mapping of user accounts to mapping of offer ids to offersHistory index + 1
+    //again, the actual last index is -1
+    mapping (address => mapping (uint => uint)) public offersHistoryIndices;
     //mapping of token addresses to permission.
     //If true, token is allowed to be deposited/traded/ordered.
     mapping (address => bool) public allowedDepositTokens;
@@ -95,6 +123,10 @@ contract EternalStorage is DSMath {
 
     function balanceOf(address token, address user) external view returns (uint) {
         return tokens[token][user];
+    }
+
+    function balanceInUse(address token, address user) external view returns (uint) {
+        return tokensInUse[token][user];
     }
 
     function getAllowedDepositToken(address token_) external view returns(bool) {

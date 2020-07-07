@@ -81,15 +81,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     bool locked;
 
-    struct OfferInfo {
-        uint     pay_amt;
-        address    pay_gem;
-        uint     buy_amt;
-        address    buy_gem;
-        address  owner;
-        uint64   timestamp;
-    }
-
     modifier can_buy(uint id) {
         require(isActive(id));
         _;
@@ -124,6 +115,30 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
       OfferInfo memory offer = offers[id];
       return (offer.pay_amt, offer.pay_gem,
               offer.buy_amt, offer.buy_gem);
+    }
+
+    function getSingleOfferFromHistory(address owner, uint id) public view returns (uint, address, uint, address, bool, bool, uint, uint) {
+        uint idIndex = getIdIndexProcessed(owner, id);
+        OfferInfoHistory memory offer = offersHistory[owner][idIndex];
+
+        return (
+            offer.pay_amt, offer.pay_gem,
+            offer.buy_amt, offer.buy_gem,
+            offer.cancelled, offer.filled,
+            offer.filledPayAmt, offer.filledBuyAmt
+        );
+    }
+
+    function getIdIndexRaw(address owner, uint id) public view returns (uint) {
+        return offersHistoryIndices[owner][id];
+    }
+
+    function getIdIndexProcessed(address owner, uint id) public view returns (uint) {
+        if (offersHistoryIndices[owner][id] == uint(0)) {
+            return offersHistoryIndices[owner][id];
+        } else {
+            return sub(offersHistoryIndices[owner][id], uint(1));
+        }
     }
 
     // ---- Public entrypoints ---- //
@@ -170,6 +185,10 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         offers[id].pay_amt = sub(offer.pay_amt, quantity);
         offers[id].buy_amt = sub(offer.buy_amt, spend);
 
+        uint idIndex = getIdIndexProcessed(offer.owner, id);
+        add(offersHistory[offer.owner][idIndex].filledPayAmt, quantity);
+        add(offersHistory[offer.owner][idIndex].filledBuyAmt, spend);
+
         // @TODO: Check Re-entrancy for msg.sender
         tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], quantity);
 
@@ -194,6 +213,9 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         if (offers[id].pay_amt == 0) {
           delete offers[id];
+          offersHistory[offer.owner][idIndex].filled = true;
+          offersHistory[offer.owner][idIndex].filledPayAmt = offer.pay_amt;
+          offersHistory[offer.owner][idIndex].filledBuyAmt = offer.buy_amt;
         }
 
         return true;
@@ -211,6 +233,9 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         delete offers[id];
 
         tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], offer.pay_amt);
+
+        uint idIndex = getIdIndexProcessed(msg.sender, id);
+        offersHistory[msg.sender][idIndex].cancelled = true;
 
         emit LogItemUpdate(id);
         emit LogKill(
@@ -263,17 +288,36 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         require(pay_gem != buy_gem);
         require(add(tokensInUse[address(pay_gem)][msg.sender], pay_amt) <= tokens[address(pay_gem)][msg.sender]);
 
+        uint64 currentTime = uint64(now);
+
         OfferInfo memory info;
         info.pay_amt = pay_amt;
         info.pay_gem = pay_gem;
         info.buy_amt = buy_amt;
         info.buy_gem = buy_gem;
         info.owner = msg.sender;
-        info.timestamp = uint64(now);
+        info.timestamp = currentTime;
         id = _next_id();
         offers[id] = info;
 
+        OfferInfoHistory memory infoHistory;
+        infoHistory.pay_amt = pay_amt;
+        infoHistory.pay_gem = pay_gem;
+        infoHistory.buy_amt = buy_amt;
+        infoHistory.buy_gem = buy_gem;
+        infoHistory.owner = msg.sender;
+        infoHistory.timestamp = currentTime;
+        infoHistory.id = id;
+        infoHistory.cancelled = false;
+        infoHistory.filled = false;
+        infoHistory.filledPayAmt = uint(0);
+        infoHistory.filledBuyAmt = uint(0);
+
         tokensInUse[address(pay_gem)][msg.sender] = add(tokensInUse[address(pay_gem)][msg.sender], pay_amt);
+        offersHistory[msg.sender].push(infoHistory);
+
+        uint index = _next_index();
+        offersHistoryIndices[msg.sender][id] = index;
 
         emit LogItemUpdate(id);
         emit LogMake(
@@ -299,5 +343,13 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         returns (uint)
     {
         last_offer_id++; return last_offer_id;
+    }
+
+    function _next_index()
+        internal
+        returns (uint)
+    {
+        lastOffersHistoryIndex[msg.sender]++;
+        return lastOffersHistoryIndex[msg.sender];
     }
 }
