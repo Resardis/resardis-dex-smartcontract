@@ -119,8 +119,7 @@ module.exports = {
       settings: { // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          // @TODO: increase the optimizer as much as possible (256 bit integer?)
-          runs: 1000,
+          runs: 999999990,
         },
         evmVersion: 'petersburg', // also check solc version for compatibility
       },
