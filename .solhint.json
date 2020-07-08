@@ -4,6 +4,7 @@
     "quotes": ["error","double"],
     "max-line-length": ["error", 99],
     "func-order": "error",
-    "private-vars-leading-underscore": "error"
+    "private-vars-leading-underscore": "error",
+    "compiler-version": ["error","^0.5.17"]
   }
 }
