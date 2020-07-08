@@ -95,10 +95,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         _;
     }
 
-    modifier can_offer {
-        _;
-    }
-
     modifier synchronized {
         require(!_locked);
         _locked = true;
@@ -333,7 +329,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         address payGem,
         uint256 buyAmt,
         address buyGem
-    ) public can_offer synchronized returns (uint256 id) {
+    ) public synchronized returns (uint256 id) {
         require(uint128(payAmt) == payAmt);
         require(uint128(buyAmt) == buyAmt);
         require(payAmt > 0);

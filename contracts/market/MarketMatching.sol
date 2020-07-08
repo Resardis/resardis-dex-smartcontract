@@ -17,7 +17,8 @@
 
 pragma solidity ^0.5.17;
 
-import "./MarketExpiring.sol";
+import "./MarketBase.sol";
+import "../vendor/dapphub/DSAuth.sol";
 import "../vendor/dapphub/DSNote.sol";
 
 contract MatchingEvents {
@@ -30,7 +31,7 @@ contract MatchingEvents {
     event LogDelete(address keeper, uint256 id);
 }
 
-contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
+contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     bool public buyEnabled = true; //buy enabled
     bool public matchingEnabled = true; //true: enable matching,
     //false: revert to expiring market
@@ -58,7 +59,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
     modifier can_cancel(uint256 id) {
         require(isActive(id), "Offer was deleted or taken, or never existed.");
         require(
-            isClosed() || msg.sender == getOwner(id) || id == dustId,
+            msg.sender == getOwner(id) || id == dustId,
             "Offer can not be cancelled because user is not owner, and market is open, and offer sells required amount of tokens."
         );
         _;
@@ -118,7 +119,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         uint256 buyAmt, //maker (ask) buy how much
         address buyGem, //maker (ask) buy which token
         uint256 pos //position to insert offer, 0 should be used if unknown
-    ) public can_offer returns (uint256) {
+    ) public returns (uint256) {
         return offer(payAmt, payGem, buyAmt, buyGem, pos, true);
     }
 
@@ -129,7 +130,7 @@ contract MatchingMarket is MatchingEvents, ExpiringMarket, DSNote {
         address buyGem, //maker (ask) buy which token
         uint256 pos, //position to insert offer, 0 should be used if unknown
         bool rounding //match "close enough" orders?
-    ) public can_offer returns (uint256) {
+    ) public returns (uint256) {
         require(!_locked, "Reentrancy attempt");
         require(_dust[address(payGem)] <= payAmt);
 
