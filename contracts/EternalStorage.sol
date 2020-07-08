@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.17;
 
 import "./vendor/openzeppelin/IERC20.sol";
 import "./vendor/dapphub/DSMath.sol";
@@ -23,10 +23,10 @@ contract EternalStorage is DSMath {
     // OfferInfo is used in volatile offer book
     // Items in the book can get deleted to ease iteration
     struct OfferInfo {
-        uint     pay_amt;
-        address    pay_gem;
-        uint     buy_amt;
-        address    buy_gem;
+        uint     payAmt;
+        address    payGem;
+        uint     buyAmt;
+        address    buyGem;
         address  owner;
         uint64   timestamp;
     }
@@ -35,10 +35,10 @@ contract EternalStorage is DSMath {
     // Used in permanent order history book
     // of which no element gets ever deleted
     struct OfferInfoHistory {
-        uint     pay_amt;
-        address    pay_gem;
-        uint     buy_amt;
-        address    buy_gem;
+        uint     payAmt;
+        address    payGem;
+        uint     buyAmt;
+        address    buyGem;
         address  owner;
         uint64   timestamp;
         uint id;
@@ -121,6 +121,18 @@ contract EternalStorage is DSMath {
         );
     }
 
+    function changeAllowedToken(
+        address token_,
+        bool depositPermit_,
+        bool withdrawPermit_
+    )
+        external
+    {
+        require(msg.sender == admin);
+        allowedDepositTokens[token_] = depositPermit_;
+        allowedWithdrawTokens[token_] = withdrawPermit_;
+    }
+
     function balanceOf(address token, address user) external view returns (uint) {
         return tokens[token][user];
     }
@@ -137,15 +149,4 @@ contract EternalStorage is DSMath {
         return allowedWithdrawTokens[token_];
     }
 
-    function changeAllowedToken(
-        address token_,
-        bool depositPermit_,
-        bool withdrawPermit_
-    )
-        external
-    {
-        require(msg.sender == admin);
-        allowedDepositTokens[token_] = depositPermit_;
-        allowedWithdrawTokens[token_] = withdrawPermit_;
-    }
 }

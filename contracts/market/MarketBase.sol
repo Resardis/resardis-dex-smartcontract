@@ -15,24 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.5.12;
+pragma solidity ^0.5.17;
 
 import "../EternalStorage.sol";
 import "../vendor/openzeppelin/IERC20.sol";
 
 contract EventfulMarket {
     event LogItemUpdate(uint id);
-    event LogTrade(uint pay_amt, address indexed pay_gem,
-                   uint buy_amt, address indexed buy_gem);
+    event LogTrade(uint payAmt, address indexed payGem,
+                   uint buyAmt, address indexed buyGem);
 
     event LogMake(
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        address             pay_gem,
-        address             buy_gem,
-        uint128           pay_amt,
-        uint128           buy_amt,
+        address             payGem,
+        address             buyGem,
+        uint128           payAmt,
+        uint128           buyAmt,
         uint64            timestamp
     );
 
@@ -40,10 +40,10 @@ contract EventfulMarket {
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        address             pay_gem,
-        address             buy_gem,
-        uint128           pay_amt,
-        uint128           buy_amt,
+        address             payGem,
+        address             buyGem,
+        uint128           payAmt,
+        uint128           buyAmt,
         uint64            timestamp
     );
 
@@ -51,11 +51,11 @@ contract EventfulMarket {
         bytes32           id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        address             pay_gem,
-        address             buy_gem,
+        address             payGem,
+        address             buyGem,
         address  indexed  taker,
-        uint128           take_amt,
-        uint128           give_amt,
+        uint128           takeAmt,
+        uint128           giveAmt,
         uint64            timestamp
     );
 
@@ -63,10 +63,10 @@ contract EventfulMarket {
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
-        address             pay_gem,
-        address             buy_gem,
-        uint128           pay_amt,
-        uint128           buy_amt,
+        address             payGem,
+        address             buyGem,
+        uint128           payAmt,
+        uint128           buyAmt,
         uint64            timestamp
     );
 }
@@ -75,11 +75,11 @@ contract EventfulMarket {
 // @TODO: DSMath was removed as it is imported in EternalStorage
 contract SimpleMarket is EternalStorage, EventfulMarket {
 
-    uint public last_offer_id;
+    uint public lastOfferId;
 
     mapping (uint => OfferInfo) public offers;
 
-    bool locked;
+    bool internal _locked;
 
     modifier can_buy(uint id) {
         require(isActive(id));
@@ -97,10 +97,10 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     modifier synchronized {
-        require(!locked);
-        locked = true;
+        require(!_locked);
+        _locked = true;
         _;
-        locked = false;
+        _locked = false;
     }
 
     function isActive(uint id) public view returns (bool active) {
@@ -113,17 +113,22 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     function getOffer(uint id) public view returns (uint, address, uint, address) {
       OfferInfo memory offer = offers[id];
-      return (offer.pay_amt, offer.pay_gem,
-              offer.buy_amt, offer.buy_gem);
+      return (offer.payAmt, offer.payGem,
+              offer.buyAmt, offer.buyGem);
     }
 
-    function getSingleOfferFromHistory(address owner, uint id) public view returns (uint, address, uint, address, bool, bool, uint, uint) {
+    function getSingleOfferFromHistory(
+        address owner,
+        uint id
+    )
+        public view returns (uint, address, uint, address, bool, bool, uint, uint)
+    {
         uint idIndex = getIdIndexProcessed(owner, id);
         OfferInfoHistory memory offer = offersHistory[owner][idIndex];
 
         return (
-            offer.pay_amt, offer.pay_gem,
-            offer.buy_amt, offer.buy_gem,
+            offer.payAmt, offer.payGem,
+            offer.buyAmt, offer.buyGem,
             offer.cancelled, offer.filled,
             offer.filledPayAmt, offer.filledBuyAmt
         );
@@ -150,12 +155,12 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         uint256 id = uint256(id_);
         emit LogBump(
             id_,
-            keccak256(abi.encodePacked(offers[id].pay_gem, offers[id].buy_gem)),
+            keccak256(abi.encodePacked(offers[id].payGem, offers[id].buyGem)),
             offers[id].owner,
-            offers[id].pay_gem,
-            offers[id].buy_gem,
-            uint128(offers[id].pay_amt),
-            uint128(offers[id].buy_amt),
+            offers[id].payGem,
+            offers[id].buyGem,
+            uint128(offers[id].payAmt),
+            uint128(offers[id].buyAmt),
             offers[id].timestamp
         );
     }
@@ -169,53 +174,53 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         returns (bool)
     {
         OfferInfo memory offer = offers[id];
-        uint spend = mul(quantity, offer.buy_amt) / offer.pay_amt;
+        uint spend = mul(quantity, offer.buyAmt) / offer.payAmt;
 
         require(uint128(spend) == spend);
         require(uint128(quantity) == quantity);
-        require(add(tokensInUse[address(offer.buy_gem)][msg.sender], spend) <= tokens[address(offer.buy_gem)][msg.sender]);
+        require(add(tokensInUse[address(offer.buyGem)][msg.sender], spend) <= tokens[address(offer.buyGem)][msg.sender]);
 
         // For backwards semantic compatibility.
         if (quantity == 0 || spend == 0 ||
-            quantity > offer.pay_amt || spend > offer.buy_amt)
+            quantity > offer.payAmt || spend > offer.buyAmt)
         {
             return false;
         }
 
-        offers[id].pay_amt = sub(offer.pay_amt, quantity);
-        offers[id].buy_amt = sub(offer.buy_amt, spend);
+        offers[id].payAmt = sub(offer.payAmt, quantity);
+        offers[id].buyAmt = sub(offer.buyAmt, spend);
 
         uint idIndex = getIdIndexProcessed(offer.owner, id);
         add(offersHistory[offer.owner][idIndex].filledPayAmt, quantity);
         add(offersHistory[offer.owner][idIndex].filledBuyAmt, spend);
 
         // @TODO: Check Re-entrancy for msg.sender
-        tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], quantity);
+        tokensInUse[address(offer.payGem)][offer.owner] = sub(tokensInUse[address(offer.payGem)][offer.owner], quantity);
 
-        tokens[address(offer.buy_gem)][msg.sender] = sub(tokens[address(offer.buy_gem)][msg.sender], spend);
-        tokens[address(offer.pay_gem)][msg.sender] = add(tokens[address(offer.pay_gem)][msg.sender], quantity);
-        tokens[address(offer.buy_gem)][offer.owner] = add(tokens[address(offer.buy_gem)][offer.owner], spend);
-        tokens[address(offer.pay_gem)][offer.owner] = sub(tokens[address(offer.pay_gem)][offer.owner], quantity);
+        tokens[address(offer.buyGem)][msg.sender] = sub(tokens[address(offer.buyGem)][msg.sender], spend);
+        tokens[address(offer.payGem)][msg.sender] = add(tokens[address(offer.payGem)][msg.sender], quantity);
+        tokens[address(offer.buyGem)][offer.owner] = add(tokens[address(offer.buyGem)][offer.owner], spend);
+        tokens[address(offer.payGem)][offer.owner] = sub(tokens[address(offer.payGem)][offer.owner], quantity);
 
         emit LogItemUpdate(id);
         emit LogTake(
             bytes32(id),
-            keccak256(abi.encodePacked(offer.pay_gem, offer.buy_gem)),
+            keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
             offer.owner,
-            offer.pay_gem,
-            offer.buy_gem,
+            offer.payGem,
+            offer.buyGem,
             msg.sender,
             uint128(quantity),
             uint128(spend),
-            uint64(now)
+            uint64(now) // solhint-disable-line not-rely-on-time
         );
-        emit LogTrade(quantity, address(offer.pay_gem), spend, address(offer.buy_gem));
+        emit LogTrade(quantity, address(offer.payGem), spend, address(offer.buyGem));
 
-        if (offers[id].pay_amt == 0) {
+        if (offers[id].payAmt == 0) {
           delete offers[id];
           offersHistory[offer.owner][idIndex].filled = true;
-          offersHistory[offer.owner][idIndex].filledPayAmt = offer.pay_amt;
-          offersHistory[offer.owner][idIndex].filledBuyAmt = offer.buy_amt;
+          offersHistory[offer.owner][idIndex].filledPayAmt = offer.payAmt;
+          offersHistory[offer.owner][idIndex].filledBuyAmt = offer.buyAmt;
         }
 
         return true;
@@ -232,7 +237,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         OfferInfo memory offer = offers[id];
         delete offers[id];
 
-        tokensInUse[address(offer.pay_gem)][offer.owner] = sub(tokensInUse[address(offer.pay_gem)][offer.owner], offer.pay_amt);
+        tokensInUse[address(offer.payGem)][offer.owner] = sub(tokensInUse[address(offer.payGem)][offer.owner], offer.payAmt);
 
         uint idIndex = getIdIndexProcessed(msg.sender, id);
         offersHistory[msg.sender][idIndex].cancelled = true;
@@ -240,13 +245,13 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         emit LogItemUpdate(id);
         emit LogKill(
             bytes32(id),
-            keccak256(abi.encodePacked(offer.pay_gem, offer.buy_gem)),
+            keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
             offer.owner,
-            offer.pay_gem,
-            offer.buy_gem,
-            uint128(offer.pay_amt),
-            uint128(offer.buy_amt),
-            uint64(now)
+            offer.payGem,
+            offer.buyGem,
+            uint128(offer.payAmt),
+            uint128(offer.buyAmt),
+            uint64(now) // solhint-disable-line not-rely-on-time
         );
 
         success = true;
@@ -259,52 +264,52 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     function make(
-        address    pay_gem,
-        address    buy_gem,
-        uint128  pay_amt,
-        uint128  buy_amt
+        address    payGem,
+        address    buyGem,
+        uint128  payAmt,
+        uint128  buyAmt
     )
         public
         returns (bytes32 id)
     {
-        return bytes32(offer(pay_amt, pay_gem, buy_amt, buy_gem));
+        return bytes32(offer(payAmt, payGem, buyAmt, buyGem));
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
-    function offer(uint pay_amt, address pay_gem, uint buy_amt, address buy_gem)
+    function offer(uint payAmt, address payGem, uint buyAmt, address buyGem)
         public
         can_offer
         synchronized
         returns (uint id)
     {
-        require(uint128(pay_amt) == pay_amt);
-        require(uint128(buy_amt) == buy_amt);
-        require(pay_amt > 0);
+        require(uint128(payAmt) == payAmt);
+        require(uint128(buyAmt) == buyAmt);
+        require(payAmt > 0);
         // @TODO: Why below cannot be true??
-        // require(pay_gem != IERC20(0x0));
-        require(buy_amt > 0);
+        // require(payGem != IERC20(0x0));
+        require(buyAmt > 0);
         // @TODO: Why below cannot be true??
-        // require(buy_gem != IERC20(0x0));
-        require(pay_gem != buy_gem);
-        require(add(tokensInUse[address(pay_gem)][msg.sender], pay_amt) <= tokens[address(pay_gem)][msg.sender]);
+        // require(buyGem != IERC20(0x0));
+        require(payGem != buyGem);
+        require(add(tokensInUse[address(payGem)][msg.sender], payAmt) <= tokens[address(payGem)][msg.sender]);
 
-        uint64 currentTime = uint64(now);
+        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
 
         OfferInfo memory info;
-        info.pay_amt = pay_amt;
-        info.pay_gem = pay_gem;
-        info.buy_amt = buy_amt;
-        info.buy_gem = buy_gem;
+        info.payAmt = payAmt;
+        info.payGem = payGem;
+        info.buyAmt = buyAmt;
+        info.buyGem = buyGem;
         info.owner = msg.sender;
         info.timestamp = currentTime;
-        id = _next_id();
+        id = _nextId();
         offers[id] = info;
 
         OfferInfoHistory memory infoHistory;
-        infoHistory.pay_amt = pay_amt;
-        infoHistory.pay_gem = pay_gem;
-        infoHistory.buy_amt = buy_amt;
-        infoHistory.buy_gem = buy_gem;
+        infoHistory.payAmt = payAmt;
+        infoHistory.payGem = payGem;
+        infoHistory.buyAmt = buyAmt;
+        infoHistory.buyGem = buyGem;
         infoHistory.owner = msg.sender;
         infoHistory.timestamp = currentTime;
         infoHistory.id = id;
@@ -313,22 +318,22 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         infoHistory.filledPayAmt = uint(0);
         infoHistory.filledBuyAmt = uint(0);
 
-        tokensInUse[address(pay_gem)][msg.sender] = add(tokensInUse[address(pay_gem)][msg.sender], pay_amt);
+        tokensInUse[address(payGem)][msg.sender] = add(tokensInUse[address(payGem)][msg.sender], payAmt);
         offersHistory[msg.sender].push(infoHistory);
 
-        uint index = _next_index();
+        uint index = _nextIndex();
         offersHistoryIndices[msg.sender][id] = index;
 
         emit LogItemUpdate(id);
         emit LogMake(
             bytes32(id),
-            keccak256(abi.encodePacked(pay_gem, buy_gem)),
+            keccak256(abi.encodePacked(payGem, buyGem)),
             msg.sender,
-            pay_gem,
-            buy_gem,
-            uint128(pay_amt),
-            uint128(buy_amt),
-            uint64(now)
+            payGem,
+            buyGem,
+            uint128(payAmt),
+            uint128(buyAmt),
+            uint64(now) // solhint-disable-line not-rely-on-time
         );
     }
 
@@ -338,14 +343,14 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         require(buy(uint256(id), maxTakeAmount));
     }
 
-    function _next_id()
+    function _nextId()
         internal
         returns (uint)
     {
-        last_offer_id++; return last_offer_id;
+        lastOfferId++; return lastOfferId;
     }
 
-    function _next_index()
+    function _nextIndex()
         internal
         returns (uint)
     {

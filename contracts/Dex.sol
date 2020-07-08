@@ -1,15 +1,15 @@
-pragma solidity ^0.5.12;
+pragma solidity ^0.5.17;
 
 import "./market/MarketMatching.sol";
 
 contract Resardis is MatchingMarket {
     constructor(
         address admin_,
-        uint64 _close_time
+        uint64 closeTime_
     )
         public
     {
         admin = admin_;
-        close_time = _close_time;
+        closeTime = closeTime_;
     }
 }

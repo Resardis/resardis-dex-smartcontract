@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.17;
 
 import "./vendor/openzeppelin/SafeMath.sol";
 import "./vendor/openzeppelin/IERC20.sol";

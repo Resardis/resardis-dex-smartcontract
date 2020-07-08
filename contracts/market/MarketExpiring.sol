@@ -15,19 +15,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.5.12;
+pragma solidity ^0.5.17;
 
 import "../vendor/dapphub/DSAuth.sol";
 import "./MarketBase.sol";
 
-// Simple Market with a market lifetime. When the close_time has been reached,
+// Simple Market with a market lifetime. When the closeTime has been reached,
 // offers can only be cancelled (offer and buy will throw).
 
 contract ExpiringMarket is DSAuth, SimpleMarket {
-    uint64 public close_time;
+    uint64 public closeTime;
     bool public stopped;
 
-    // after close_time has been reached, no new offers are allowed
+    // after closeTime has been reached, no new offers are allowed
     modifier can_offer {
         require(!isClosed());
         _;
@@ -48,11 +48,11 @@ contract ExpiringMarket is DSAuth, SimpleMarket {
     }
 
     function isClosed() public view returns (bool closed) {
-        return stopped || getTime() > close_time;
+        return stopped || getTime() > closeTime;
     }
 
     function getTime() public view returns (uint64) {
-        return uint64(now);
+        return uint64(now); // solhint-disable-line not-rely-on-time
     }
 
     function stop() public auth {

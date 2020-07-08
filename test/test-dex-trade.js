@@ -80,7 +80,7 @@ contract('TestResardis-Trading', async accounts => {
     // Values before offer is made
     const initBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const initLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
-    const initLastOfferId = await dexInstance.last_offer_id.call();
+    const initLastOfferId = await dexInstance.lastOfferId.call();
     const initIdIndex = await dexInstance.getIdIndexRaw(firstAccount, initLastOfferId);
 
     // Place the order
@@ -101,7 +101,7 @@ contract('TestResardis-Trading', async accounts => {
     // Values after offer is made
     const finalBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const finalLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
-    const finalLastOfferId = await dexInstance.last_offer_id.call();
+    const finalLastOfferId = await dexInstance.lastOfferId.call();
     const finalIdIndex = await dexInstance.getIdIndexRaw(firstAccount, finalLastOfferId);
 
     // Get offer values
@@ -115,7 +115,7 @@ contract('TestResardis-Trading', async accounts => {
     // Values after offer is cancelled
     const afterCancelBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const afterCancelLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
-    const afterCancelLastOfferId = await dexInstance.last_offer_id.call();
+    const afterCancelLastOfferId = await dexInstance.lastOfferId.call();
     const afterCancelIdIndex = await dexInstance.getIdIndexRaw(firstAccount, afterCancelLastOfferId);
     const afterCancelActualOffer = await dexInstance.getOffer(afterCancelLastOfferId);
     const afterCancelHistorcalOffer = await dexInstance.getSingleOfferFromHistory(firstAccount, afterCancelLastOfferId);
@@ -196,7 +196,7 @@ contract('TestResardis-Trading', async accounts => {
     const initEthBalSec = await dexInstance.balanceOf(addressZero, secAccount, { from: secAccount });
 
     // Values before offers are made
-    const initLastOfferIdCommon = await dexInstance.last_offer_id.call();
+    const initLastOfferIdCommon = await dexInstance.lastOfferId.call();
 
     const initEthBalanceInUseFirst = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const initTokenBalanceInUseFirst = await dexInstance.balanceInUse(tokenAddress, firstAccount, { from: firstAccount });
@@ -220,7 +220,7 @@ contract('TestResardis-Trading', async accounts => {
     counterOfferMadeTotal++;
     counterOfferMadeFirst++;
     const finalCounterOfferMadeFirst = counterOfferMadeFirst;
-    const afterFirstLastOfferId = await dexInstance.last_offer_id.call();
+    const afterFirstLastOfferId = await dexInstance.lastOfferId.call();
 
     const initCounterOfferMadeSec = counterOfferMadeSec;
     await dexInstance.offer(
@@ -230,7 +230,7 @@ contract('TestResardis-Trading', async accounts => {
     counterOfferMadeTotal++;
     counterOfferMadeSec++;
     const finalCounterOfferMadeSec = counterOfferMadeSec;
-    const afterSecLastOfferId = await dexInstance.last_offer_id.call();
+    const afterSecLastOfferId = await dexInstance.lastOfferId.call();
 
     const finalCounterOfferMadeTotal = counterOfferMadeTotal;
 
