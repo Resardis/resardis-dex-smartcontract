@@ -106,3 +106,4 @@ Last: Check chained import references in expiring and matching.
 + lastOffersHistoryIndex does not work as expected. It is actually not the last, but last + 1.
 + Allowed disallowed token code parts and tests.
 + Owner vs user name convention in parameters and returns.
++ Check freezing time
