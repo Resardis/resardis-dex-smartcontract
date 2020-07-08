@@ -24,7 +24,7 @@ max_line_length = 120
 # The JSON files contain newlines inconsistently
 [*.json]
 indent_size = 2
-insert_final_newline = ignore
+insert_final_newline = false
 
 [*.txt]
 max_line_length = 79
