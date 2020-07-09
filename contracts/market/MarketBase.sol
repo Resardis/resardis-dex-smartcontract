@@ -1,20 +1,3 @@
-/// simple_market.sol
-// Copyright (C) 2016 - 2020 Maker Ecosystem Growth Holdings, INC.
-
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 pragma solidity ^0.5.17;
 
 import "../EternalStorage.sol";
@@ -30,17 +13,6 @@ contract EventfulMarket {
     );
 
     event LogMake(
-        bytes32 indexed id,
-        bytes32 indexed pair,
-        address indexed maker,
-        address payGem,
-        address buyGem,
-        uint128 payAmt,
-        uint128 buyAmt,
-        uint64 timestamp
-    );
-
-    event LogBump(
         bytes32 indexed id,
         bytes32 indexed pair,
         address indexed maker,
@@ -175,20 +147,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     // ---- Public entrypoints ---- //
 
-    function bump(bytes32 id_) public can_buy(uint256(id_)) {
-        uint256 id = uint256(id_);
-        emit LogBump(
-            id_,
-            keccak256(abi.encodePacked(offers[id].payGem, offers[id].buyGem)),
-            offers[id].owner,
-            offers[id].payGem,
-            offers[id].buyGem,
-            uint128(offers[id].payAmt),
-            uint128(offers[id].buyAmt),
-            offers[id].timestamp
-        );
-    }
-
     // Accept given `quantity` of an offer. Transfers funds from caller to
     // offer maker, and from market to caller.
     function buy(uint256 id, uint256 quantity)
@@ -308,19 +266,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         );
 
         success = true;
-    }
-
-    function kill(bytes32 id) public {
-        require(cancel(uint256(id)));
-    }
-
-    function make(
-        address payGem,
-        address buyGem,
-        uint128 payAmt,
-        uint128 buyAmt
-    ) public returns (bytes32 id) {
-        return bytes32(offer(payAmt, payGem, buyAmt, buyGem));
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
