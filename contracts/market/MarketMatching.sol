@@ -1,20 +1,3 @@
-/// matching_market.sol
-// Copyright (C) 2017 - 2020 Maker Ecosystem Growth Holdings, INC.
-
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 pragma solidity ^0.5.17;
 
 import "./MarketBase.sol";
@@ -41,17 +24,17 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 delb; //the blocknumber where this entry was marked for delete
     }
     //doubly linked lists of sorted offer ids
-    mapping(uint256 => sortInfo) public _rank;
+    mapping(uint256 => sortInfo) public rank;
     //id of the highest offer for a token pair
-    mapping(address => mapping(address => uint256)) public _best;
+    mapping(address => mapping(address => uint256)) public best;
     //number of offers stored for token pair in sorted orderbook
-    mapping(address => mapping(address => uint256)) public _span;
+    mapping(address => mapping(address => uint256)) public span;
     //minimum sell amount for a token to avoid dust offers
-    mapping(address => uint256) public _dust;
+    mapping(address => uint256) public dust;
     //next unsorted offer id
-    mapping(uint256 => uint256) public _near;
+    mapping(uint256 => uint256) public near;
     //first unsorted offer id
-    uint256 public _head;
+    uint256 public head;
     // id of the latest offer marked as dust
     uint256 public dustId;
 
@@ -67,21 +50,8 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     // ---- Public entrypoints ---- //
 
-    function make(
-        address payGem,
-        address buyGem,
-        uint128 payAmt,
-        uint128 buyAmt
-    ) public returns (bytes32) {
-        return bytes32(offer(payAmt, payGem, buyAmt, buyGem));
-    }
-
     function take(bytes32 id, uint128 maxTakeAmount) public {
         require(buy(uint256(id), maxTakeAmount));
-    }
-
-    function kill(bytes32 id) public {
-        require(cancel(uint256(id)));
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
@@ -132,7 +102,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         bool rounding //match "close enough" orders?
     ) public returns (uint256) {
         require(!_locked, "Reentrancy attempt");
-        require(_dust[address(payGem)] <= payAmt);
+        require(dust[address(payGem)] <= payAmt);
 
         if (matchingEnabled) {
             return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding);
@@ -178,16 +148,16 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         return true;
     }
 
-    //deletes _rank [id]
+    //deletes rank [id]
     //  Function should be called by keepers.
     function delRank(uint256 id) public returns (bool) {
         require(!_locked, "Reentrancy attempt");
         require(
             !isActive(id) &&
-                _rank[id].delb != 0 &&
-                _rank[id].delb < block.number - 10
+                rank[id].delb != 0 &&
+                rank[id].delb < block.number - 10
         );
-        delete _rank[id];
+        delete rank[id];
         emit LogDelete(msg.sender, id);
         return true;
     }
@@ -199,10 +169,10 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     //    of tokens received.
     function setMinSell(
         address payGem, //token to assign minimum sell amount to
-        uint256 dust //maker (ask) minimum sell amount
+        uint256 dustAmt //maker (ask) minimum sell amount
     ) public auth note returns (bool) {
-        _dust[address(payGem)] = dust;
-        emit LogMinSell(address(payGem), dust);
+        dust[address(payGem)] = dustAmt;
+        emit LogMinSell(address(payGem), dustAmt);
         return true;
     }
 
@@ -210,7 +180,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     function getMinSell(
         address payGem //token for which minimum sell amount is queried
     ) public view returns (uint256) {
-        return _dust[address(payGem)];
+        return dust[address(payGem)];
     }
 
     //set buy functionality enabled/disabled
@@ -245,7 +215,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         view
         returns (uint256)
     {
-        return _best[address(sellGem)][address(buyGem)];
+        return best[address(sellGem)][address(buyGem)];
     }
 
     //return the next worse offer in the sorted list
@@ -253,7 +223,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     //      a lower one if its a bid offer,
     //      and in both cases the newer one if they're equal.
     function getWorseOffer(uint256 id) public view returns (uint256) {
-        return _rank[id].prev;
+        return rank[id].prev;
     }
 
     //return the next better offer in the sorted list
@@ -261,7 +231,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     //      the next higher priced one if its a bid offer
     //      and in both cases the older one if they're equal.
     function getBetterOffer(uint256 id) public view returns (uint256) {
-        return _rank[id].next;
+        return rank[id].next;
     }
 
     //return the amount of better offers for a token pair
@@ -270,7 +240,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         view
         returns (uint256)
     {
-        return _span[address(sellGem)][address(buyGem)];
+        return span[address(sellGem)][address(buyGem)];
     }
 
     //get the first unsorted offer that was inserted by a contract
@@ -279,20 +249,20 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     //      Keepers can calculate the insertion position offchain and pass it to the insert() function to insert
     //      the unsorted offer into the sorted list. Unsorted offers will not be matched, but can be bought with buy().
     function getFirstUnsortedOffer() public view returns (uint256) {
-        return _head;
+        return head;
     }
 
     //get the next unsorted offer
     //      Can be used to cycle through all the unsorted offers.
     function getNextUnsortedOffer(uint256 id) public view returns (uint256) {
-        return _near[id];
+        return near[id];
     }
 
     function isOfferSorted(uint256 id) public view returns (bool) {
         return
-            _rank[id].next != 0 ||
-            _rank[id].prev != 0 ||
-            _best[address(offers[id].payGem)][address(offers[id].buyGem)] == id;
+            rank[id].next != 0 ||
+            rank[id].prev != 0 ||
+            best[address(offers[id].payGem)][address(offers[id].buyGem)] == id;
     }
 
     function sellAllAmount(
@@ -439,7 +409,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         // If offer has become dust during buy, we cancel it
         if (
             isActive(id) &&
-            offers[id].payAmt < _dust[address(offers[id].payGem)]
+            offers[id].payAmt < dust[address(offers[id].payGem)]
         ) {
             dustId = id; //enable current msg.sender to call cancel(id)
             cancel(id);
@@ -453,13 +423,13 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
         address buyGem = address(offers[id].buyGem);
         address payGem = address(offers[id].payGem);
-        uint256 top = _best[payGem][buyGem];
+        uint256 top = best[payGem][buyGem];
         uint256 oldTop = 0;
 
         // Find the larger-than-id order whose successor is less-than-id.
         while (top != 0 && _isPricedLtOrEq(id, top)) {
             oldTop = top;
-            top = _rank[top].prev;
+            top = rank[top].prev;
         }
         return oldTop;
     }
@@ -470,7 +440,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
         // Look for an active order.
         while (pos != 0 && !isActive(pos)) {
-            pos = _rank[pos].prev;
+            pos = rank[pos].prev;
         }
 
         if (pos == 0) {
@@ -486,14 +456,14 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 // the prior if statements.
                 while (pos != 0 && _isPricedLtOrEq(id, pos)) {
                     oldPos = pos;
-                    pos = _rank[pos].prev;
+                    pos = rank[pos].prev;
                 }
                 return oldPos;
 
                 // ...or walk it up.
             } else {
                 while (pos != 0 && !_isPricedLtOrEq(id, pos)) {
-                    pos = _rank[pos].next;
+                    pos = rank[pos].next;
                 }
                 return pos;
             }
@@ -527,8 +497,8 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 mPayAmt; //maker offer wants to sell this much token
 
         // there is at least one offer stored for token pair
-        while (_best[address(tBuyGem)][address(tPayGem)] > 0) {
-            bestMakerId = _best[address(tBuyGem)][address(tPayGem)];
+        while (best[address(tBuyGem)][address(tPayGem)] > 0) {
+            bestMakerId = best[address(tBuyGem)][address(tPayGem)];
             mBuyAmt = offers[bestMakerId].buyAmt;
             mPayAmt = offers[bestMakerId].payAmt;
 
@@ -557,7 +527,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             }
         }
 
-        if (tBuyAmt > 0 && tPayAmt > 0 && tPayAmt >= _dust[address(tPayGem)]) {
+        if (tBuyAmt > 0 && tPayAmt > 0 && tPayAmt >= dust[address(tPayGem)]) {
             //new offer should be created
             id = super.offer(tPayAmt, tPayGem, tBuyAmt, tBuyGem);
             //insert offer into the sorted list
@@ -575,10 +545,10 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 buyAmt, //maker (ask) buy how much
         address buyGem //maker (ask) buy which token
     ) internal returns (uint256 id) {
-        require(_dust[address(payGem)] <= payAmt);
+        require(dust[address(payGem)] <= payAmt);
         id = super.offer(payAmt, payGem, buyAmt, buyGem);
-        _near[id] = _head;
-        _head = id;
+        near[id] = head;
+        head = id;
         emit LogUnsortedOffer(id);
     }
 
@@ -604,24 +574,24 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             //offers[id] is not the highest offer
             //requirement below is satisfied by statements above
             //require(_isPricedLtOrEq(id, pos));
-            prevId = _rank[pos].prev;
-            _rank[pos].prev = id;
-            _rank[id].next = pos;
+            prevId = rank[pos].prev;
+            rank[pos].prev = id;
+            rank[id].next = pos;
         } else {
             //offers[id] is the highest offer
-            prevId = _best[address(payGem)][address(buyGem)];
-            _best[address(payGem)][address(buyGem)] = id;
+            prevId = best[address(payGem)][address(buyGem)];
+            best[address(payGem)][address(buyGem)] = id;
         }
 
         if (prevId != 0) {
             //if lower offer does exist
             //requirement below is satisfied by statements above
             //require(!_isPricedLtOrEq(id, prevId));
-            _rank[prevId].next = id;
-            _rank[id].prev = prevId;
+            rank[prevId].next = id;
+            rank[id].prev = prevId;
         }
 
-        _span[address(payGem)][address(buyGem)]++;
+        span[address(payGem)][address(buyGem)]++;
         emit LogSortedOffer(id);
     }
 
@@ -631,30 +601,30 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     ) internal returns (bool) {
         address buyGem = address(offers[id].buyGem);
         address payGem = address(offers[id].payGem);
-        require(_span[payGem][buyGem] > 0);
+        require(span[payGem][buyGem] > 0);
 
         require(
-            _rank[id].delb == 0 && //assert id is in the sorted list
+            rank[id].delb == 0 && //assert id is in the sorted list
                 isOfferSorted(id)
         );
 
-        if (id != _best[payGem][buyGem]) {
+        if (id != best[payGem][buyGem]) {
             // offers[id] is not the highest offer
-            require(_rank[_rank[id].next].prev == id);
-            _rank[_rank[id].next].prev = _rank[id].prev;
+            require(rank[rank[id].next].prev == id);
+            rank[rank[id].next].prev = rank[id].prev;
         } else {
             //offers[id] is the highest offer
-            _best[payGem][buyGem] = _rank[id].prev;
+            best[payGem][buyGem] = rank[id].prev;
         }
 
-        if (_rank[id].prev != 0) {
+        if (rank[id].prev != 0) {
             //offers[id] is not the lowest offer
-            require(_rank[_rank[id].prev].next == id);
-            _rank[_rank[id].prev].next = _rank[id].next;
+            require(rank[rank[id].prev].next == id);
+            rank[rank[id].prev].next = rank[id].next;
         }
 
-        _span[payGem][buyGem]--;
-        _rank[id].delb = block.number; //mark _rank[id] for deletion
+        span[payGem][buyGem]--;
+        rank[id].delb = block.number; //mark rank[id] for deletion
         return true;
     }
 
@@ -662,28 +632,28 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     function _hide(
         uint256 id //id of maker offer to remove from unsorted list
     ) internal returns (bool) {
-        uint256 uid = _head; //id of an offer in unsorted offers list
+        uint256 uid = head; //id of an offer in unsorted offers list
         uint256 pre = uid; //id of previous offer in unsorted offers list
 
         require(!isOfferSorted(id)); //make sure offer id is not in sorted offers list
 
-        if (_head == id) {
+        if (head == id) {
             //check if offer is first offer in unsorted offers list
-            _head = _near[id]; //set head to new first unsorted offer
-            _near[id] = 0; //delete order from unsorted order list
+            head = near[id]; //set head to new first unsorted offer
+            near[id] = 0; //delete order from unsorted order list
             return true;
         }
         while (uid > 0 && uid != id) {
             //find offer in unsorted order list
             pre = uid;
-            uid = _near[uid];
+            uid = near[uid];
         }
         if (uid != id) {
             //did not find offer id in unsorted offers list
             return false;
         }
-        _near[pre] = _near[id]; //set previous unsorted offer to point to offer after offer id
-        _near[id] = 0; //delete order from unsorted order list
+        near[pre] = near[id]; //set previous unsorted offer to point to offer after offer id
+        near[id] = 0; //delete order from unsorted order list
         return true;
     }
 }
