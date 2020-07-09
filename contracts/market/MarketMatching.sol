@@ -18,13 +18,13 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     bool public buyEnabled = true; //buy enabled
     bool public matchingEnabled = true; //true: enable matching,
     //false: revert to expiring market
-    struct sortInfo {
+    struct SortInfo {
         uint256 next; //points to id of next higher offer
         uint256 prev; //points to id of previous lower offer
         uint256 delb; //the blocknumber where this entry was marked for delete
     }
     //doubly linked lists of sorted offer ids
-    mapping(uint256 => sortInfo) public rank;
+    mapping(uint256 => SortInfo) public rank;
     //id of the highest offer for a token pair
     mapping(address => mapping(address => uint256)) public best;
     //number of offers stored for token pair in sorted orderbook
@@ -43,7 +43,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         require(isActive(id), "Offer was deleted or taken, or never existed.");
         require(
             msg.sender == getOwner(id) || id == dustId,
-            "Offer can not be cancelled because user is not owner, and market is open, and offer sells required amount of tokens."
+            "Offer can not be cancelled: user is not the owner or offer is not dust."
         );
         _;
     }
@@ -244,10 +244,12 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     }
 
     //get the first unsorted offer that was inserted by a contract
-    //      Contracts can't calculate the insertion position of their offer because it is not an O(1) operation.
+    //      Contracts can't calculate the insertion position of their offer
+    //      because it is not an O(1) operation.
     //      Their offers get put in the unsorted list of offers.
-    //      Keepers can calculate the insertion position offchain and pass it to the insert() function to insert
-    //      the unsorted offer into the sorted list. Unsorted offers will not be matched, but can be bought with buy().
+    //      Keepers can calculate the insertion position offchain and pass it
+    //      to the insert() function to insert the unsorted offer into the sorted list.
+    //      Unsorted offers will not be matched, but can be bought with buy().
     function getFirstUnsortedOffer() public view returns (uint256) {
         return head;
     }
@@ -287,17 +289,22 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             }
             if (payAmt >= offers[offerId].buyAmt) {
                 //If amount to sell is higher or equal than current offer amount to buy
-                fillAmt = add(fillAmt, offers[offerId].payAmt); //Add amount bought to acumulator
-                payAmt = sub(payAmt, offers[offerId].buyAmt); //Decrease amount to sell
-                take(bytes32(offerId), uint128(offers[offerId].payAmt)); //We take the whole offer
+                //Add amount bought to acumulator
+                fillAmt = add(fillAmt, offers[offerId].payAmt);
+                //Decrease amount to sell
+                payAmt = sub(payAmt, offers[offerId].buyAmt);
+                //We take the whole offer
+                take(bytes32(offerId), uint128(offers[offerId].payAmt));
             } else {
                 // if lower
                 uint256 baux = rmul(
                     payAmt * 10**9,
                     rdiv(offers[offerId].payAmt, offers[offerId].buyAmt)
                 ) / 10**9;
-                fillAmt = add(fillAmt, baux); //Add amount bought to acumulator
-                take(bytes32(offerId), uint128(baux)); //We take the portion of the offer that we need
+                //Add amount bought to acumulator
+                fillAmt = add(fillAmt, baux);
+                //We take the portion of the offer that we need
+                take(bytes32(offerId), uint128(baux));
                 payAmt = 0; //All amount is sold
             }
         }
@@ -338,7 +345,8 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                         rdiv(offers[offerId].buyAmt, offers[offerId].payAmt)
                     ) / 10**9
                 ); //Add amount sold to acumulator
-                take(bytes32(offerId), uint128(buyAmt)); //We take the portion of the offer that we need
+                //We take the portion of the offer that we need
+                take(bytes32(offerId), uint128(buyAmt));
                 buyAmt = 0; //All amount is bought
             }
         }
