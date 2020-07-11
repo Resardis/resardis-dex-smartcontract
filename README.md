@@ -112,3 +112,8 @@ Last: Check chained import references in expiring and matching.
 + Is take function necessary, if yes consider changing it to internal maybe?
 + Unsorted list and keepers:
 > If matchingEnabled true(default), then inserted offers are matched. Except the ones inserted by contracts, because those end up in the unsorted list of offers, that must be later sorted by keepers using insert(). If matchingEnabled is false then MatchingMarket is reverted to ExpiringMarket, and matching is not done, and sorted lists are disabled.
+
++ Error messages to all require().
++ Cancel dust amount somewhere automatically.
++ Rounding precision and function overloading in offer method.
++ _findpos() and _find() and hinting mechanism
