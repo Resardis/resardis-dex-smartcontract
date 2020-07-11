@@ -5,19 +5,11 @@ import "../vendor/dapphub/DSAuth.sol";
 import "../vendor/dapphub/DSNote.sol";
 
 contract MatchingEvents {
-    event LogBuyEnabled(bool isEnabled);
     event LogMinSell(address payGem, uint256 minAmount);
-    event LogMatchingEnabled(bool isEnabled);
-    event LogUnsortedOffer(uint256 id);
     event LogSortedOffer(uint256 id);
-    event LogInsert(address keeper, uint256 id);
-    event LogDelete(address keeper, uint256 id);
 }
 
 contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
-    bool public buyEnabled = true; //buy enabled
-    bool public matchingEnabled = true; //true: enable matching,
-    //false: revert to expiring market
     struct SortInfo {
         uint256 next; //points to id of next higher offer
         uint256 prev; //points to id of previous lower offer
@@ -31,14 +23,9 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     mapping(address => mapping(address => uint256)) public span;
     //minimum sell amount for a token to avoid dust offers
     mapping(address => uint256) public dust;
-    //next unsorted offer id
-    mapping(uint256 => uint256) public near;
-    //first unsorted offer id
-    uint256 public head;
     // id of the latest offer marked as dust
     uint256 public dustId;
 
-    // After close, anyone can cancel an offer
     modifier can_cancel(uint256 id) {
         require(isActive(id), "Offer was deleted or taken, or never existed.");
         require(
@@ -52,34 +39,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     function take(bytes32 id, uint128 maxTakeAmount) public {
         require(buy(uint256(id), maxTakeAmount));
-    }
-
-    // Make a new offer. Takes funds from the caller into market escrow.
-    //
-    // If matching is enabled:
-    //     * creates new offer without putting it in
-    //       the sorted list.
-    //     * available to authorized contracts only!
-    //     * keepers should call insert(id,pos)
-    //       to put offer in the sorted list.
-    //
-    // If matching is disabled:
-    //     * calls expiring market's offer().
-    //     * available to everyone without authorization.
-    //     * no sorting is done.
-    //
-    function offer(
-        uint256 payAmt, //maker (ask) sell how much
-        address payGem, //maker (ask) sell which token
-        uint256 buyAmt, //taker (ask) buy how much
-        address buyGem //taker (ask) buy which token
-    ) public returns (uint256) {
-        require(!_locked, "Reentrancy attempt");
-
-
-            function(uint256, address, uint256, address) returns (uint256) fn
-         = matchingEnabled ? _offeru : super.offer;
-        return fn(payAmt, payGem, buyAmt, buyGem);
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
@@ -104,62 +63,22 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         require(!_locked, "Reentrancy attempt");
         require(dust[address(payGem)] <= payAmt);
 
-        if (matchingEnabled) {
-            return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding);
-        }
-        return super.offer(payAmt, payGem, buyAmt, buyGem);
+        return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding);
     }
 
     //Transfers funds from caller to offer maker, and from market to caller.
     function buy(uint256 id, uint256 amount) public can_buy(id) returns (bool) {
         require(!_locked, "Reentrancy attempt");
-        function(uint256, uint256) returns (bool) fn = matchingEnabled
-            ? _buys
-            : super.buy;
-        return fn(id, amount);
+
+        return _buys(id, amount);
     }
 
     // Cancel an offer. Refunds offer maker.
     function cancel(uint256 id) public can_cancel(id) returns (bool success) {
         require(!_locked, "Reentrancy attempt");
-        if (matchingEnabled) {
-            if (isOfferSorted(id)) {
-                require(_unsort(id));
-            } else {
-                require(_hide(id));
-            }
-        }
+        require(_unsort(id));
+
         return super.cancel(id); //delete the offer.
-    }
-
-    //insert offer into the sorted list
-    //keepers need to use this function
-    function insert(
-        uint256 id, //maker (ask) id
-        uint256 pos //position to insert into
-    ) public returns (bool) {
-        require(!_locked, "Reentrancy attempt");
-        require(!isOfferSorted(id)); //make sure offers[id] is not yet sorted
-        require(isActive(id)); //make sure offers[id] is active
-
-        _hide(id); //remove offer from unsorted offers list
-        _sort(id, pos); //put offer into the sorted offers list
-        emit LogInsert(msg.sender, id);
-        return true;
-    }
-
-    //deletes rank [id]
-    //  Function should be called by keepers.
-    function delRank(uint256 id) public returns (bool) {
-        require(!_locked, "Reentrancy attempt");
-        require(
-            !isActive(id) &&
-                rank[id].delb != 0 &&
-                rank[id].delb < block.number - 10
-        );
-        delete rank[id];
-        emit LogDelete(msg.sender, id);
-        return true;
     }
 
     //set the minimum sell amount for a token
@@ -181,30 +100,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         address payGem //token for which minimum sell amount is queried
     ) public view returns (uint256) {
         return dust[address(payGem)];
-    }
-
-    //set buy functionality enabled/disabled
-    function setBuyEnabled(bool buyEnabled_) public auth returns (bool) {
-        buyEnabled = buyEnabled_;
-        emit LogBuyEnabled(buyEnabled);
-        return true;
-    }
-
-    //set matching enabled/disabled
-    //    If matchingEnabled true(default), then inserted offers are matched.
-    //    Except the ones inserted by contracts, because those end up
-    //    in the unsorted list of offers, that must be later sorted by
-    //    keepers using insert().
-    //    If matchingEnabled is false then MatchingMarket is reverted to ExpiringMarket,
-    //    and matching is not done, and sorted lists are disabled.
-    function setMatchingEnabled(bool matchingEnabled_)
-        public
-        auth
-        returns (bool)
-    {
-        matchingEnabled = matchingEnabled_;
-        emit LogMatchingEnabled(matchingEnabled);
-        return true;
     }
 
     //return the best offer for a token pair
@@ -241,30 +136,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         returns (uint256)
     {
         return span[address(sellGem)][address(buyGem)];
-    }
-
-    //get the first unsorted offer that was inserted by a contract
-    //      Contracts can't calculate the insertion position of their offer
-    //      because it is not an O(1) operation.
-    //      Their offers get put in the unsorted list of offers.
-    //      Keepers can calculate the insertion position offchain and pass it
-    //      to the insert() function to insert the unsorted offer into the sorted list.
-    //      Unsorted offers will not be matched, but can be bought with buy().
-    function getFirstUnsortedOffer() public view returns (uint256) {
-        return head;
-    }
-
-    //get the next unsorted offer
-    //      Can be used to cycle through all the unsorted offers.
-    function getNextUnsortedOffer(uint256 id) public view returns (uint256) {
-        return near[id];
-    }
-
-    function isOfferSorted(uint256 id) public view returns (bool) {
-        return
-            rank[id].next != 0 ||
-            rank[id].prev != 0 ||
-            best[address(offers[id].payGem)][address(offers[id].buyGem)] == id;
     }
 
     function sellAllAmount(
@@ -404,15 +275,11 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     // ---- Internal Functions ---- //
 
     function _buys(uint256 id, uint256 amount) internal returns (bool) {
-        require(buyEnabled);
         if (amount == offers[id].payAmt) {
-            if (isOfferSorted(id)) {
-                //offers[id] must be removed from sorted list because all of it is bought
-                _unsort(id);
-            } else {
-                _hide(id);
-            }
+            //offers[id] must be removed from sorted list because all of it is bought
+            _unsort(id);
         }
+
         require(super.buy(id, amount));
         // If offer has become dust during buy, we cancel it
         if (
@@ -422,6 +289,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             dustId = id; //enable current msg.sender to call cancel(id)
             cancel(id);
         }
+
         return true;
     }
 
@@ -543,23 +411,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         }
     }
 
-    // Make a new offer without putting it in the sorted list.
-    // Takes funds from the caller into market escrow.
-    // ****Available to authorized contracts only!**********
-    // Keepers should call insert(id,pos) to put offer in the sorted list.
-    function _offeru(
-        uint256 payAmt, //maker (ask) sell how much
-        address payGem, //maker (ask) sell which token
-        uint256 buyAmt, //maker (ask) buy how much
-        address buyGem //maker (ask) buy which token
-    ) internal returns (uint256 id) {
-        require(dust[address(payGem)] <= payAmt);
-        id = super.offer(payAmt, payGem, buyAmt, buyGem);
-        near[id] = head;
-        head = id;
-        emit LogUnsortedOffer(id);
-    }
-
     //put offer into the sorted list
     function _sort(
         uint256 id, //maker (ask) id
@@ -573,8 +424,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
         pos = pos == 0 ||
             offers[pos].payGem != payGem ||
-            offers[pos].buyGem != buyGem ||
-            !isOfferSorted(pos)
+            offers[pos].buyGem != buyGem
             ? _find(id)
             : _findpos(id, pos);
 
@@ -611,10 +461,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         address payGem = address(offers[id].payGem);
         require(span[payGem][buyGem] > 0);
 
-        require(
-            rank[id].delb == 0 && //assert id is in the sorted list
-                isOfferSorted(id)
-        );
+        require(rank[id].delb == 0);
 
         if (id != best[payGem][buyGem]) {
             // offers[id] is not the highest offer
@@ -636,32 +483,4 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         return true;
     }
 
-    //Hide offer from the unsorted order book (does not cancel offer)
-    function _hide(
-        uint256 id //id of maker offer to remove from unsorted list
-    ) internal returns (bool) {
-        uint256 uid = head; //id of an offer in unsorted offers list
-        uint256 pre = uid; //id of previous offer in unsorted offers list
-
-        require(!isOfferSorted(id)); //make sure offer id is not in sorted offers list
-
-        if (head == id) {
-            //check if offer is first offer in unsorted offers list
-            head = near[id]; //set head to new first unsorted offer
-            near[id] = 0; //delete order from unsorted order list
-            return true;
-        }
-        while (uid > 0 && uid != id) {
-            //find offer in unsorted order list
-            pre = uid;
-            uid = near[uid];
-        }
-        if (uid != id) {
-            //did not find offer id in unsorted offers list
-            return false;
-        }
-        near[pre] = near[id]; //set previous unsorted offer to point to offer after offer id
-        near[id] = 0; //delete order from unsorted order list
-        return true;
-    }
 }
