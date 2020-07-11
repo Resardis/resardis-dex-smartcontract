@@ -1,8 +1,8 @@
 pragma solidity ^0.5.17;
 
 import "./MarketBase.sol";
-import "../vendor/dapphub/DSAuth.sol";
-import "../vendor/dapphub/DSNote.sol";
+import "../../lib/dapphub/DSAuth.sol";
+import "../../lib/dapphub/DSNote.sol";
 
 contract MatchingEvents {
     event LogMinSell(address payGem, uint256 minAmount);

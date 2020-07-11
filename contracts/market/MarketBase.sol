@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
 import "../EternalStorage.sol";
-import "../vendor/openzeppelin/IERC20.sol";
+import "../../lib/openzeppelin/IERC20.sol";
 
 contract EventfulMarket {
     event LogItemUpdate(uint256 id);

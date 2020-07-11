@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
-import "./vendor/openzeppelin/SafeMath.sol";
-import "./vendor/openzeppelin/IERC20.sol";
+import "../lib/openzeppelin/SafeMath.sol";
+import "../lib/openzeppelin/IERC20.sol";
 
 contract OriginalResardis {
     using SafeMath for uint256;

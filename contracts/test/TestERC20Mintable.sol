@@ -1,6 +1,6 @@
 pragma solidity ^0.5.17;
 
-import "../vendor/openzeppelin/ERC20Mintable.sol";
+import "../../lib/openzeppelin/ERC20Mintable.sol";
 
 contract ERC20MintableX is ERC20Mintable {
     string public name = "ERC20X";

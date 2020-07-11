@@ -1,7 +1,7 @@
 pragma solidity ^0.5.17;
 
-import "./vendor/openzeppelin/IERC20.sol";
-import "./vendor/dapphub/DSMath.sol";
+import "../lib/openzeppelin/IERC20.sol";
+import "../lib/dapphub/DSMath.sol";
 
 contract EternalStorage is DSMath {
     event Deposit(address token, address user, uint256 amount, uint256 balance);
