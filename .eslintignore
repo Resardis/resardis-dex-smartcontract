@@ -1,6 +1,8 @@
 build/
 node_modules/
 .git/
+lib/
+contracts/
 *.lock
 *.md
 *.sh

@@ -96,3 +96,24 @@ manticore ./contracts/dex.sol
 myth analyze ./contracts/dex.sol --execution-timeout <sec> --max-depth <number>
 slither ./contracts/dex.sol
 ```
+#### TODO
++ The old markets use dsmath. Ensure that math ops are done using uint256. Also, I have seen places where "/" is used instead of div.
++ In expiring market, DSauth is only used once (auth modifier). Verify that. If so, might want to replace it with something simpler.
+Last: Check chained import references in expiring and matching.
++ Array of dynamic size vs static size and gas relation.
++ Cancel/kill offer and new offer variables.
++ Offer Position-dependent testing.
++ lastOffersHistoryIndex does not work as expected. It is actually not the last, but last + 1.
++ Allowed disallowed token code parts and tests.
++ Owner vs user name convention in parameters and returns.
++ Check freezing time
++ isClosed() || msg.sender == getOwner(id) || id == dustId, in can_cancel
++ getSingleOfferFromHistory ve getOffer isActive contexinde
++ Is take function necessary, if yes consider changing it to internal maybe?
++ Unsorted list and keepers:
+> If matchingEnabled true(default), then inserted offers are matched. Except the ones inserted by contracts, because those end up in the unsorted list of offers, that must be later sorted by keepers using insert(). If matchingEnabled is false then MatchingMarket is reverted to ExpiringMarket, and matching is not done, and sorted lists are disabled.
+
++ Error messages to all require().
++ Cancel dust amount somewhere automatically.
++ Rounding precision and function overloading in offer method.
++ _findpos() and _find() and hinting mechanism

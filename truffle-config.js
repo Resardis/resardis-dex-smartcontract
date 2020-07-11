@@ -114,12 +114,12 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: '0.5.13', // also check evmVersion for compatibility
+      version: '0.5.17', // also check evmVersion for compatibility
       docker: false, // Use "x.x.x" you've installed locally with docker (default: false)
       settings: { // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
-          enabled: false,
-          // runs: 1000,
+          enabled: true,
+          runs: 999999990,
         },
         evmVersion: 'petersburg', // also check solc version for compatibility
       },
