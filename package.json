@@ -47,6 +47,7 @@
     "gen:rinkeby-key": "node ./scripts/generate-eth-key.js rinkeby",
     "deploy:ganache": "bash scripts/deploy-ganache.sh --reset --network ganache_local",
     "deploy:rinkeby": "truffle migrate --reset --network rinkeby",
+    "deploy:matic:testnet": "truffle migrate --reset --network matic_testnet",
     "test": "bash scripts/test.sh --network ganache_local"
   },
   "engines": {
@@ -68,6 +69,7 @@
     "prettier-plugin-solidity": "^1.0.0-alpha.54",
     "solhint": "^3.0.0",
     "truffle": "^5.1.0",
+    "truffle-hdwallet-provider": "^1.0.17",
     "truffle-privatekey-provider": "^1.3.0"
   }
 }
