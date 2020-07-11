@@ -79,6 +79,13 @@ yarn lint:js:fix
 + Set Infura keys for rinkeby: `export INFURA_API_KEY=XXXX`
 + Deploy to rinkeby: `yarn deploy:rinkeby`
 
+#### Deploying to Matic Testnet
++ List of the networks and the corresponding block explorers can be found at [https://docs.matic.network/docs/integrate/network/](https://docs.matic.network/docs/integrate/network/)
++ Currently, `truffle-config.js` has `https://rpc-mumbai.matic.today/` as the active testnet.
++ `truffle` reads the account mnemonic that will be used to deploy to Matic testnet from `private/test-mnemonic`, which is a one-line file containing only the mnemonic.
++ Matic version of ETH is also needed to deploy. Get it from [https://faucet.matic.network/](https://faucet.matic.network/).
++ Deploy to Matic testnet: `yarn deploy:matic:testnet`
+
 #### Unit Testing
 ```shell
 yarn test # Deploy using truffle and apply unit tests

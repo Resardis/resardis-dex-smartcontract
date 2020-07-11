@@ -29,6 +29,9 @@ const { readFileSync } = require('fs');
 const path = require('path');
 const fs = require('fs');
 const PrivateKeyProvider = require('truffle-privatekey-provider');
+const HDWalletProvider = require('truffle-hdwallet-provider');
+
+const mnemonic = fs.readFileSync("./private/test-mnemonic").toString().trim();
 
 const privateDir = './private';
 
@@ -75,6 +78,14 @@ module.exports = {
       skipDryRun: false,
       confirmations: 2,
       timeoutBlocks: 50,
+    },
+
+    matic_testnet: {
+      provider: () => new HDWalletProvider(mnemonic, `https://rpc-mumbai.matic.today`),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true
     },
 
     // Another network with more advanced options...
