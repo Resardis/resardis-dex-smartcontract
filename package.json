@@ -45,10 +45,10 @@
     "lint:sol": "yarn prettier --check '**/*.sol'; yarn solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "yarn prettier --write '**/*.sol'; yarn solhint --fix 'contracts/**/*.sol'",
     "gen:rinkeby-key": "node ./scripts/generate-eth-key.js rinkeby",
-    "deploy:ganache": "bash scripts/deploy-ganache.sh --reset --network ganache_local",
+    "deploy:ganache": "bash scripts/start-ganache-truffle.sh migrate --reset --network ganache_local",
     "deploy:rinkeby": "truffle migrate --reset --network rinkeby",
     "deploy:matic:testnet": "truffle migrate --reset --network matic_testnet",
-    "test": "bash scripts/test.sh --network ganache_local"
+    "test:ganache": "bash scripts/start-ganache-truffle.sh test --network ganache_local"
   },
   "engines": {
     "node": ">=10.0.0 <11.0.0",
