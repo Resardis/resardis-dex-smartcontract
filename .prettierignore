@@ -2,5 +2,4 @@ node_modules/
 build/
 .git/
 lib/
-contracts/Migrations.sol
-contracts/OldDex.sol
+dist/
