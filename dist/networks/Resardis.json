@@ -30,8 +30,7 @@
           }
         ],
         "name": "Deposit",
-        "type": "event",
-        "signature": "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7"
+        "type": "event"
       },
       "0xa2c251311b1a7a475913900a2a73dc9789a21b04bc737e050bbc506dd4eb3488": {
         "anonymous": false,
@@ -44,8 +43,7 @@
           }
         ],
         "name": "LogItemUpdate",
-        "type": "event",
-        "signature": "0xa2c251311b1a7a475913900a2a73dc9789a21b04bc737e050bbc506dd4eb3488"
+        "type": "event"
       },
       "0x9577941d28fff863bfbee4694a6a4a56fb09e169619189d2eaa750b5b4819995": {
         "anonymous": false,
@@ -100,8 +98,7 @@
           }
         ],
         "name": "LogKill",
-        "type": "event",
-        "signature": "0x9577941d28fff863bfbee4694a6a4a56fb09e169619189d2eaa750b5b4819995"
+        "type": "event"
       },
       "0x773ff502687307abfa024ac9f62f9752a0d210dac2ffd9a29e38e12e2ea82c82": {
         "anonymous": false,
@@ -156,8 +153,7 @@
           }
         ],
         "name": "LogMake",
-        "type": "event",
-        "signature": "0x773ff502687307abfa024ac9f62f9752a0d210dac2ffd9a29e38e12e2ea82c82"
+        "type": "event"
       },
       "0xc28d56449b0bb31e64ee7487e061f57a2e72aea8019d810832f26dda099823d0": {
         "anonymous": false,
@@ -176,8 +172,7 @@
           }
         ],
         "name": "LogMinSell",
-        "type": "event",
-        "signature": "0xc28d56449b0bb31e64ee7487e061f57a2e72aea8019d810832f26dda099823d0"
+        "type": "event"
       },
       "0x644843f351d3fba4abcd60109eaff9f54bac8fb8ccf0bab941009c21df21cf31": {
         "anonymous": true,
@@ -220,8 +215,7 @@
           }
         ],
         "name": "LogNote",
-        "type": "event",
-        "signature": "0x644843f351d3fba4abcd60109eaff9f54bac8fb8ccf0bab941009c21df21cf31"
+        "type": "event"
       },
       "0x1abebea81bfa2637f28358c371278fb15ede7ea8dd28d2e03b112ff6d936ada4": {
         "anonymous": false,
@@ -234,8 +228,7 @@
           }
         ],
         "name": "LogSetAuthority",
-        "type": "event",
-        "signature": "0x1abebea81bfa2637f28358c371278fb15ede7ea8dd28d2e03b112ff6d936ada4"
+        "type": "event"
       },
       "0xce241d7ca1f669fee44b6fc00b8eba2df3bb514eed0f6f668f8f89096e81ed94": {
         "anonymous": false,
@@ -248,8 +241,7 @@
           }
         ],
         "name": "LogSetOwner",
-        "type": "event",
-        "signature": "0xce241d7ca1f669fee44b6fc00b8eba2df3bb514eed0f6f668f8f89096e81ed94"
+        "type": "event"
       },
       "0x20fb9bad86c18f7e22e8065258790d9416a7d2df8ff05f80f82c46d38b925acd": {
         "anonymous": false,
@@ -262,8 +254,7 @@
           }
         ],
         "name": "LogSortedOffer",
-        "type": "event",
-        "signature": "0x20fb9bad86c18f7e22e8065258790d9416a7d2df8ff05f80f82c46d38b925acd"
+        "type": "event"
       },
       "0x3383e3357c77fd2e3a4b30deea81179bc70a795d053d14d5b7f2f01d0fd4596f": {
         "anonymous": false,
@@ -324,8 +315,7 @@
           }
         ],
         "name": "LogTake",
-        "type": "event",
-        "signature": "0x3383e3357c77fd2e3a4b30deea81179bc70a795d053d14d5b7f2f01d0fd4596f"
+        "type": "event"
       },
       "0x819e390338feffe95e2de57172d6faf337853dfd15c7a09a32d76f7fd2443875": {
         "anonymous": false,
@@ -356,8 +346,7 @@
           }
         ],
         "name": "LogTrade",
-        "type": "event",
-        "signature": "0x819e390338feffe95e2de57172d6faf337853dfd15c7a09a32d76f7fd2443875"
+        "type": "event"
       },
       "0xf341246adaac6f497bc2a656f546ab9e182111d630394f0c57c710a59a2cb567": {
         "anonymous": false,
@@ -388,12 +377,11 @@
           }
         ],
         "name": "Withdraw",
-        "type": "event",
-        "signature": "0xf341246adaac6f497bc2a656f546ab9e182111d630394f0c57c710a59a2cb567"
+        "type": "event"
       }
     },
     "links": {},
-    "address": "0xEE36419388939c759d90F1D530Db36C27CA72A83",
-    "transactionHash": "0x1f325fba090623c3c7b6bb4467155b32b28ed18da9249184617a73a8496bfa35"
+    "address": "0x3E200cE9ac873bB08ADb4B58CfD4C7b741F3A643",
+    "transactionHash": "0x2899b9ec1172f722c1f05f8f3bae83a9bd3a8a945c12d2398734a6a8f67b6126"
   }
 }
