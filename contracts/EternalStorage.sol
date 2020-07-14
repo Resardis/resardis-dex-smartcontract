@@ -1,4 +1,5 @@
 pragma solidity ^0.5.17;
+pragma experimental ABIEncoderV2;
 
 import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";

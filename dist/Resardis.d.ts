@@ -75,6 +75,10 @@ interface ResardisInterface extends Interface {
       encode([token_]: [string]): string;
     }>;
 
+    getArrayOfferFromHistory: TypedFunctionDescription<{
+      encode([owner]: [string]): string;
+    }>;
+
     getBestOffer: TypedFunctionDescription<{
       encode([sellGem, buyGem]: [string, string]): string;
     }>;
@@ -396,6 +400,35 @@ export class Resardis extends Contract {
 
     getAllowedWithdrawToken(token_: string): Promise<boolean>;
 
+    getArrayOfferFromHistory(
+      owner: string
+    ): Promise<
+      {
+        payAmt: BigNumber;
+        payGem: string;
+        buyAmt: BigNumber;
+        buyGem: string;
+        owner: string;
+        timestamp: BigNumber;
+        id: BigNumber;
+        cancelled: boolean;
+        filled: boolean;
+        filledPayAmt: BigNumber;
+        filledBuyAmt: BigNumber;
+        0: BigNumber;
+        1: string;
+        2: BigNumber;
+        3: string;
+        4: string;
+        5: BigNumber;
+        6: BigNumber;
+        7: boolean;
+        8: boolean;
+        9: BigNumber;
+        10: BigNumber;
+      }[]
+    >;
+
     getBestOffer(sellGem: string, buyGem: string): Promise<BigNumber>;
 
     getBetterOffer(id: BigNumberish): Promise<BigNumber>;
@@ -643,6 +676,35 @@ export class Resardis extends Contract {
   getAllowedDepositToken(token_: string): Promise<boolean>;
 
   getAllowedWithdrawToken(token_: string): Promise<boolean>;
+
+  getArrayOfferFromHistory(
+    owner: string
+  ): Promise<
+    {
+      payAmt: BigNumber;
+      payGem: string;
+      buyAmt: BigNumber;
+      buyGem: string;
+      owner: string;
+      timestamp: BigNumber;
+      id: BigNumber;
+      cancelled: boolean;
+      filled: boolean;
+      filledPayAmt: BigNumber;
+      filledBuyAmt: BigNumber;
+      0: BigNumber;
+      1: string;
+      2: BigNumber;
+      3: string;
+      4: string;
+      5: BigNumber;
+      6: BigNumber;
+      7: boolean;
+      8: boolean;
+      9: BigNumber;
+      10: BigNumber;
+    }[]
+  >;
 
   getBestOffer(sellGem: string, buyGem: string): Promise<BigNumber>;
 
@@ -944,6 +1006,8 @@ export class Resardis extends Contract {
     getAllowedDepositToken(token_: string): Promise<BigNumber>;
 
     getAllowedWithdrawToken(token_: string): Promise<BigNumber>;
+
+    getArrayOfferFromHistory(owner: string): Promise<BigNumber>;
 
     getBestOffer(sellGem: string, buyGem: string): Promise<BigNumber>;
 

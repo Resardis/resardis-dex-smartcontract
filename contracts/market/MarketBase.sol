@@ -1,4 +1,5 @@
 pragma solidity ^0.5.17;
+pragma experimental ABIEncoderV2;
 
 import "../EternalStorage.sol";
 import "../../lib/openzeppelin/IERC20.sol";
@@ -123,6 +124,16 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
             offer.filledPayAmt,
             offer.filledBuyAmt
         );
+    }
+
+    function getArrayOfferFromHistory(address owner)
+        external
+        view
+        returns (OfferInfoHistory[] memory)
+    {
+        OfferInfoHistory[] memory offerArray = offersHistory[owner];
+
+        return offerArray;
     }
 
     function getIdIndexRaw(address owner, uint256 id)

@@ -776,6 +776,84 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "owner",
+        type: "address"
+      }
+    ],
+    name: "getArrayOfferFromHistory",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "payAmt",
+            type: "uint256"
+          },
+          {
+            internalType: "address",
+            name: "payGem",
+            type: "address"
+          },
+          {
+            internalType: "uint256",
+            name: "buyAmt",
+            type: "uint256"
+          },
+          {
+            internalType: "address",
+            name: "buyGem",
+            type: "address"
+          },
+          {
+            internalType: "address",
+            name: "owner",
+            type: "address"
+          },
+          {
+            internalType: "uint64",
+            name: "timestamp",
+            type: "uint64"
+          },
+          {
+            internalType: "uint256",
+            name: "id",
+            type: "uint256"
+          },
+          {
+            internalType: "bool",
+            name: "cancelled",
+            type: "bool"
+          },
+          {
+            internalType: "bool",
+            name: "filled",
+            type: "bool"
+          },
+          {
+            internalType: "uint256",
+            name: "filledPayAmt",
+            type: "uint256"
+          },
+          {
+            internalType: "uint256",
+            name: "filledBuyAmt",
+            type: "uint256"
+          }
+        ],
+        internalType: "struct EternalStorage.OfferInfoHistory[]",
+        name: "",
+        type: "tuple[]"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
         name: "sellGem",
         type: "address"
       },
