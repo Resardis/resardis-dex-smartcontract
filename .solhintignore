@@ -3,3 +3,4 @@ build/
 .git/
 lib/
 dist/
+contracts/Migrations.sol
