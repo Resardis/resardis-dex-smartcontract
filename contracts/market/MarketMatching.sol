@@ -285,7 +285,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         // If offer has become dust during buy, we cancel it
         if (
             isActive(id) &&
-            offers[id].payAmt < dust[address(offers[id].payGem)]
+            (offers[id].payAmt < dust[address(offers[id].payGem)])
         ) {
             dustId = id; //enable current msg.sender to call cancel(id)
             cancel(id);
@@ -483,5 +483,4 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         rank[id].delb = block.number; //mark rank[id] for deletion
         return true;
     }
-
 }
