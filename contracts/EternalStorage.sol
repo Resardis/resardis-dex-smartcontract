@@ -16,6 +16,20 @@ contract EternalStorage is DSMath {
 
     address public admin; //the admin address
 
+    struct DepositInfo {
+        address token; // address of deposited token
+        uint256 amount; // amount of deposited token
+        address owner;
+        uint64 timestamp;
+    }
+
+    struct WithdrawInfo {
+        address token; // address of deposited token
+        uint256 amount; // amount of deposited token
+        address owner;
+        uint64 timestamp;
+    }
+
     // OfferInfo is used in volatile offer book
     // Items in the book can get deleted to ease iteration
     struct OfferInfo {
@@ -51,6 +65,11 @@ contract EternalStorage is DSMath {
     //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
     //locked = in use = this amount of tokens is currently in order book
     mapping(address => mapping(address => uint256)) public tokensInUse;
+    //mapping of accounts to mapping of token addresses to deposit info (token=0 => Ether)
+    mapping(address => mapping(address => DepositInfo[])) public depositHistory;
+    //mapping of accounts to mapping of token addresses to withdraw info (token=0 => Ether)
+    mapping(address => mapping(address => WithdrawInfo[]))
+        public withdrawHistory;
     //mapping of user accounts to mapping of OfferInfoHistory array
     mapping(address => OfferInfoHistory[]) public offersHistory;
     //mapping of user accounts to the (last index no of offersHistory + 1)
@@ -71,6 +90,15 @@ contract EternalStorage is DSMath {
             tokens[address(0)][msg.sender],
             msg.value
         );
+
+        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
+        DepositInfo memory depositInfo;
+        depositInfo.token = address(0);
+        depositInfo.amount = msg.value;
+        depositInfo.owner = msg.sender;
+        depositInfo.timestamp = currentTime;
+        depositHistory[msg.sender][address(0)].push(depositInfo);
+
         emit Deposit(
             address(0),
             msg.sender,
@@ -85,7 +113,17 @@ contract EternalStorage is DSMath {
             tokens[address(0)][msg.sender],
             amount
         );
+
+        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
+        WithdrawInfo memory withdrawInfo;
+        withdrawInfo.token = address(0);
+        withdrawInfo.amount = amount;
+        withdrawInfo.owner = msg.sender;
+        withdrawInfo.timestamp = currentTime;
+        withdrawHistory[msg.sender][address(0)].push(withdrawInfo);
+
         msg.sender.transfer(amount);
+
         emit Withdraw(
             address(0),
             msg.sender,
@@ -99,8 +137,19 @@ contract EternalStorage is DSMath {
         //or this contract will not be able to do the transfer on your behalf.
         require(token != address(0));
         require(allowedDepositTokens[token] == true);
+
         tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
+
+        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
+        DepositInfo memory depositInfo;
+        depositInfo.token = token;
+        depositInfo.amount = amount;
+        depositInfo.owner = msg.sender;
+        depositInfo.timestamp = currentTime;
+        depositHistory[msg.sender][token].push(depositInfo);
+
         require(IERC20(token).transferFrom(msg.sender, address(this), amount));
+
         emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
@@ -108,8 +157,19 @@ contract EternalStorage is DSMath {
         require(token != address(0));
         require(allowedWithdrawTokens[token] == true);
         require(tokens[token][msg.sender] >= amount);
+
+        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
+        WithdrawInfo memory withdrawInfo;
+        withdrawInfo.token = token;
+        withdrawInfo.amount = amount;
+        withdrawInfo.owner = msg.sender;
+        withdrawInfo.timestamp = currentTime;
+        withdrawHistory[msg.sender][token].push(withdrawInfo);
+
         tokens[token][msg.sender] = sub(tokens[token][msg.sender], amount);
+
         require(IERC20(token).transfer(msg.sender, amount));
+
         emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
