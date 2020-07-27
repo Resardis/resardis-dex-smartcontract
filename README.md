@@ -124,3 +124,4 @@ Last: Check chained import references in expiring and matching.
 + Cancel dust amount somewhere automatically.
 + Rounding precision and function overloading in offer method.
 + _findpos() and _find() and hinting mechanism
++ _matcho unnecessarily loops if the token balance is not sufficient.
