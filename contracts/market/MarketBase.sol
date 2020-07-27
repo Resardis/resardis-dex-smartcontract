@@ -158,10 +158,96 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     // ---- Public entrypoints ---- //
 
+    // Cancel an offer. Refunds offer maker.
+    function cancel(uint256 id)
+        public
+        can_cancel(id)
+        synchronized
+        returns (bool success)
+    {
+        // read-only offer. Modify an offer by directly accessing offers[id]
+        OfferInfo memory offer = offers[id];
+        delete offers[id];
+
+        tokensInUse[address(offer.payGem)][offer.owner] = sub(
+            tokensInUse[address(offer.payGem)][offer.owner],
+            offer.payAmt
+        );
+
+        uint256 idIndex = getIdIndexProcessed(msg.sender, id);
+        offersHistory[msg.sender][idIndex].cancelled = true;
+
+        emit LogItemUpdate(id);
+        emit LogKill(
+            bytes32(id),
+            keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
+            offer.owner,
+            offer.payGem,
+            offer.buyGem,
+            uint128(offer.payAmt),
+            uint128(offer.buyAmt),
+            uint64(now) // solhint-disable-line not-rely-on-time
+        );
+
+        success = true;
+    }
+
+
+    // ---- Internal Functions ---- //
+
+    // Make a new offer. Takes funds from the caller into market escrow.
+    function _offer(
+        uint256 payAmt,
+        address payGem,
+        uint256 buyAmt,
+        address buyGem
+    ) internal synchronized returns (uint256 id) {
+        require(uint128(payAmt) == payAmt);
+        require(uint128(buyAmt) == buyAmt);
+        require(payAmt > 0);
+        // @TODO: Why below cannot be true??
+        // require(payGem != IERC20(0x0));
+        require(buyAmt > 0);
+        // @TODO: Why below cannot be true??
+        // require(buyGem != IERC20(0x0));
+        require(payGem != buyGem);
+        require(
+            add(tokensInUse[address(payGem)][msg.sender], payAmt) <=
+                tokens[address(payGem)][msg.sender]
+        );
+
+        OfferInfo memory info;
+        info.payAmt = payAmt;
+        info.payGem = payGem;
+        info.buyAmt = buyAmt;
+        info.buyGem = buyGem;
+        info.owner = msg.sender;
+        info.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+        id = _nextId();
+        offers[id] = info;
+
+        tokensInUse[address(payGem)][msg.sender] = add(
+            tokensInUse[address(payGem)][msg.sender],
+            payAmt
+        );
+
+        emit LogItemUpdate(id);
+        emit LogMake(
+            bytes32(id),
+            keccak256(abi.encodePacked(payGem, buyGem)),
+            msg.sender,
+            payGem,
+            buyGem,
+            uint128(payAmt),
+            uint128(buyAmt),
+            uint64(now) // solhint-disable-line not-rely-on-time
+        );
+    }
+
     // Accept given `quantity` of an offer. Transfers funds from caller to
     // offer maker, and from market to caller.
-    function buy(uint256 id, uint256 quantity)
-        public
+    function _buy(uint256 id, uint256 quantity)
+        internal
         can_buy(id)
         synchronized
         returns (bool)
@@ -245,91 +331,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return true;
     }
 
-    // Cancel an offer. Refunds offer maker.
-    function cancel(uint256 id)
-        public
-        can_cancel(id)
-        synchronized
-        returns (bool success)
-    {
-        // read-only offer. Modify an offer by directly accessing offers[id]
-        OfferInfo memory offer = offers[id];
-        delete offers[id];
-
-        tokensInUse[address(offer.payGem)][offer.owner] = sub(
-            tokensInUse[address(offer.payGem)][offer.owner],
-            offer.payAmt
-        );
-
-        uint256 idIndex = getIdIndexProcessed(msg.sender, id);
-        offersHistory[msg.sender][idIndex].cancelled = true;
-
-        emit LogItemUpdate(id);
-        emit LogKill(
-            bytes32(id),
-            keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
-            offer.owner,
-            offer.payGem,
-            offer.buyGem,
-            uint128(offer.payAmt),
-            uint128(offer.buyAmt),
-            uint64(now) // solhint-disable-line not-rely-on-time
-        );
-
-        success = true;
-    }
-
-    // Make a new offer. Takes funds from the caller into market escrow.
-    function _offer(
-        uint256 payAmt,
-        address payGem,
-        uint256 buyAmt,
-        address buyGem
-    ) internal synchronized returns (uint256 id) {
-        require(uint128(payAmt) == payAmt);
-        require(uint128(buyAmt) == buyAmt);
-        require(payAmt > 0);
-        // @TODO: Why below cannot be true??
-        // require(payGem != IERC20(0x0));
-        require(buyAmt > 0);
-        // @TODO: Why below cannot be true??
-        // require(buyGem != IERC20(0x0));
-        require(payGem != buyGem);
-        require(
-            add(tokensInUse[address(payGem)][msg.sender], payAmt) <=
-                tokens[address(payGem)][msg.sender]
-        );
-
-        OfferInfo memory info;
-        info.payAmt = payAmt;
-        info.payGem = payGem;
-        info.buyAmt = buyAmt;
-        info.buyGem = buyGem;
-        info.owner = msg.sender;
-        info.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
-        id = _nextId();
-        offers[id] = info;
-
-        tokensInUse[address(payGem)][msg.sender] = add(
-            tokensInUse[address(payGem)][msg.sender],
-            payAmt
-        );
-
-        emit LogItemUpdate(id);
-        emit LogMake(
-            bytes32(id),
-            keccak256(abi.encodePacked(payGem, buyGem)),
-            msg.sender,
-            payGem,
-            buyGem,
-            uint128(payAmt),
-            uint128(buyAmt),
-            uint64(now) // solhint-disable-line not-rely-on-time
-        );
-    }
-
-    function take(bytes32 id, uint128 maxTakeAmount) public {
-        require(buy(uint256(id), maxTakeAmount));
+    function _take(bytes32 id, uint128 maxTakeAmount) internal {
+        require(_buy(uint256(id), maxTakeAmount));
     }
 
     function _nextId() internal returns (uint256) {

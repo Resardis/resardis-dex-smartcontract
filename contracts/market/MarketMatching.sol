@@ -38,10 +38,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     // ---- Public entrypoints ---- //
 
-    function take(bytes32 id, uint128 maxTakeAmount) public {
-        require(buy(uint256(id), maxTakeAmount));
-    }
-
     // Make a new offer. Takes funds from the caller into market escrow.
     function offer(
         uint256 payAmt, //maker (ask) sell how much
@@ -56,13 +52,6 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         require(dust[address(payGem)] <= payAmt);
 
         return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding, offerType);
-    }
-
-    //Transfers funds from caller to offer maker, and from market to caller.
-    function buy(uint256 id, uint256 amount) public can_buy(id) returns (bool) {
-        require(!_locked, "Reentrancy attempt");
-
-        return _buys(id, amount);
     }
 
     // Cancel an offer. Refunds offer maker.
@@ -157,7 +146,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //Decrease amount to sell
                 payAmt = sub(payAmt, offers[offerId].buyAmt);
                 //We take the whole offer
-                take(bytes32(offerId), uint128(offers[offerId].payAmt));
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt));
             } else {
                 // if lower
                 uint256 baux = rmul(
@@ -167,7 +156,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //Add amount bought to acumulator
                 fillAmt = add(fillAmt, baux);
                 //We take the portion of the offer that we need
-                take(bytes32(offerId), uint128(baux));
+                _take(bytes32(offerId), uint128(baux));
                 payAmt = 0; //All amount is sold
             }
         }
@@ -198,7 +187,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //If amount to buy is higher or equal than current offer amount to sell
                 fillAmt = add(fillAmt, offers[offerId].buyAmt); //Add amount sold to acumulator
                 buyAmt = sub(buyAmt, offers[offerId].payAmt); //Decrease amount to buy
-                take(bytes32(offerId), uint128(offers[offerId].payAmt)); //We take the whole offer
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt)); //We take the whole offer
             } else {
                 //if lower
                 fillAmt = add(
@@ -209,7 +198,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                     ) / 10**9
                 ); //Add amount sold to acumulator
                 //We take the portion of the offer that we need
-                take(bytes32(offerId), uint128(buyAmt));
+                _take(bytes32(offerId), uint128(buyAmt));
                 buyAmt = 0; //All amount is bought
             }
         }
@@ -266,13 +255,16 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     // ---- Internal Functions ---- //
 
-    function _buys(uint256 id, uint256 amount) internal returns (bool) {
+    //Transfers funds from caller to offer maker, and from market to caller.
+    function _buy(uint256 id, uint256 amount) internal can_buy(id) returns (bool) {
+        require(!_locked, "Reentrancy attempt");
+
         if (amount == offers[id].payAmt) {
             //offers[id] must be removed from sorted list because all of it is bought
             _unsort(id);
         }
 
-        require(super.buy(id, amount));
+        require(super._buy(id, amount));
         // If offer has become dust during buy, we cancel it
         if (
             isActive(id) &&
@@ -283,6 +275,10 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         }
 
         return true;
+    }
+
+    function _take(bytes32 id, uint128 maxTakeAmount) internal {
+        require(_buy(uint256(id), maxTakeAmount));
     }
 
     //find the id of the next higher offer after offers[id]
@@ -403,7 +399,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             }
             // ^ The `rounding` parameter is a compromise borne of a couple days
             // of discussion.
-            buy(best[address(tBuyGem)][address(tPayGem)], min(mPayAmt, tBuyAmt));
+            _buy(best[address(tBuyGem)][address(tPayGem)], min(mPayAmt, tBuyAmt));
             tBuyAmtOld = tBuyAmt;
             tBuyAmt = sub(tBuyAmt, min(mPayAmt, tBuyAmt));
             tPayAmt = mul(tBuyAmt, tPayAmt) / tBuyAmtOld;
