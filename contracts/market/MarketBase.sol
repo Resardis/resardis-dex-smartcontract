@@ -300,39 +300,20 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
                 tokens[address(payGem)][msg.sender]
         );
 
-        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
-
         OfferInfo memory info;
         info.payAmt = payAmt;
         info.payGem = payGem;
         info.buyAmt = buyAmt;
         info.buyGem = buyGem;
         info.owner = msg.sender;
-        info.timestamp = currentTime;
+        info.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         id = _nextId();
         offers[id] = info;
-
-        OfferInfoHistory memory infoHistory;
-        infoHistory.payAmt = payAmt;
-        infoHistory.payGem = payGem;
-        infoHistory.buyAmt = buyAmt;
-        infoHistory.buyGem = buyGem;
-        infoHistory.owner = msg.sender;
-        infoHistory.timestamp = currentTime;
-        infoHistory.id = id;
-        infoHistory.cancelled = false;
-        infoHistory.filled = false;
-        infoHistory.filledPayAmt = uint256(0);
-        infoHistory.filledBuyAmt = uint256(0);
 
         tokensInUse[address(payGem)][msg.sender] = add(
             tokensInUse[address(payGem)][msg.sender],
             payAmt
         );
-        offersHistory[msg.sender].push(infoHistory);
-
-        uint256 index = _nextIndex();
-        offersHistoryIndices[msg.sender][id] = index;
 
         emit LogItemUpdate(id);
         emit LogMake(
