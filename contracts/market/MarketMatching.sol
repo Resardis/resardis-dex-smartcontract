@@ -50,6 +50,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     ) public returns (uint256) {
         require(!_locked, "Reentrancy attempt");
         require(dust[address(payGem)] <= payAmt);
+        require(availableOfferTypes[offerType]);
 
         return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding, offerType);
     }
