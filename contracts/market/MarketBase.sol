@@ -276,8 +276,9 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         offers[id].buyAmt = sub(offer.buyAmt, spend);
 
         uint256 idIndex = getIdIndexProcessed(offer.owner, id);
-        add(offersHistory[offer.owner][idIndex].filledPayAmt, quantity);
-        add(offersHistory[offer.owner][idIndex].filledBuyAmt, spend);
+        OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][idIndex];
+        offerHistorical.filledPayAmt = add(offerHistorical.filledPayAmt, quantity);
+        offerHistorical.filledBuyAmt = add(offerHistorical.filledBuyAmt, spend);
 
         // @TODO: Check Re-entrancy for msg.sender
         tokensInUse[address(offer.payGem)][offer.owner] = sub(
@@ -323,9 +324,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         if (offers[id].payAmt == 0) {
             delete offers[id];
-            offersHistory[offer.owner][idIndex].filled = true;
-            offersHistory[offer.owner][idIndex].filledPayAmt = offer.payAmt;
-            offersHistory[offer.owner][idIndex].filledBuyAmt = offer.buyAmt;
+            offerHistorical.filled = true;
         }
 
         return true;
