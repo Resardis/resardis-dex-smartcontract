@@ -56,6 +56,7 @@ contract EternalStorage is DSMath {
         bool filled;
         uint256 filledPayAmt;
         uint256 filledBuyAmt;
+        uint8 offerType;
     }
 
     // @TODO: Can we use IERC20 type instead of address (implicit conversion error)
