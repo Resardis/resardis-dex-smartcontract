@@ -427,7 +427,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             // Below makes the sender a maker as it sets a new offer
             if (tBuyAmt > 0 && tPayAmt > 0 && tPayAmt >= dust[address(tPayGem)]) {
                 //new offer should be created
-                id = super.offer(tPayAmt, tPayGem, tBuyAmt, tBuyGem);
+                id = _offer(tPayAmt, tPayGem, tBuyAmt, tBuyGem);
                 //insert offer into the sorted list
                 _sort(id, pos);
 

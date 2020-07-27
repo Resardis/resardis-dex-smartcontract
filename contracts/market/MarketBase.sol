@@ -280,12 +280,12 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     // Make a new offer. Takes funds from the caller into market escrow.
-    function offer(
+    function _offer(
         uint256 payAmt,
         address payGem,
         uint256 buyAmt,
         address buyGem
-    ) public synchronized returns (uint256 id) {
+    ) internal synchronized returns (uint256 id) {
         require(uint128(payAmt) == payAmt);
         require(uint128(buyAmt) == buyAmt);
         require(payAmt > 0);
