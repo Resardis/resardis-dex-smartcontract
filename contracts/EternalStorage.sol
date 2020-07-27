@@ -85,6 +85,8 @@ contract EternalStorage is DSMath {
     //mapping of token addresses to permission.
     //If true, token is allowed to be withdrawed.
     mapping(address => bool) public allowedWithdrawTokens;
+    //mapping of available offer types to boolean (true=available)
+    mapping(uint8 => bool) public availableOfferTypes;
 
     function deposit() external payable {
         tokens[address(0)][msg.sender] = add(
@@ -182,6 +184,13 @@ contract EternalStorage is DSMath {
         require(msg.sender == admin);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
+    }
+
+    function changeAvailableOfferType(uint8 offerType, bool state)
+        external
+    {
+        require(msg.sender == admin);
+        availableOfferTypes[offerType] = state;
     }
 
     function balanceOf(address token, address user)

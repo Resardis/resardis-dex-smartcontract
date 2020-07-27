@@ -65,6 +65,29 @@ contract('TestResardis-Trading', async accounts => {
     // earlyDate = web3.utils.toBN(788918400); // 1995/01/01
   });
 
+  it('Allow limit and market orders.', async () => {
+    // Get initial values
+    const currentAdmin = await dexInstance.admin.call();
+
+    const initLimit = await dexInstance.availableOfferTypes.call(0);
+    const initMarket = await dexInstance.availableOfferTypes.call(1);
+
+    // Allow Limit Order
+    await dexInstance.changeAvailableOfferType(0, true, { from: currentAdmin });
+    // Allow Market Order
+    await dexInstance.changeAvailableOfferType(1, true, { from: currentAdmin });
+
+    // Get final values
+    const finalLimit = await dexInstance.availableOfferTypes.call(0);
+    const finalMarket = await dexInstance.availableOfferTypes.call(1);
+
+    assert.isFalse(initLimit);
+    assert.isFalse(initMarket);
+
+    assert.isTrue(finalLimit);
+    assert.isTrue(finalMarket);
+  })
+
   it('Place a single limit order, then cancel it.', async () => {
     // deposit some ETH
     const initBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
