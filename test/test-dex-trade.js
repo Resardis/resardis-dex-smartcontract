@@ -65,7 +65,7 @@ contract('TestResardis-Trading', async accounts => {
     // earlyDate = web3.utils.toBN(788918400); // 1995/01/01
   });
 
-  it('Place a single order, then cancel it.', async () => {
+  it('Place a single limit order, then cancel it.', async () => {
     // deposit some ETH
     const initBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
     await dexInstance.deposit({ from: firstAccount, value: depAmountEth });
@@ -88,7 +88,7 @@ contract('TestResardis-Trading', async accounts => {
     const initCounterOfferMadeFirst = counterOfferMadeFirst;
 
     await dexInstance.offer(
-      amountGive, addressZero, amountGet, tokenAddress, 0,
+      amountGive, addressZero, amountGet, tokenAddress, 0, true, 0,
       { from: firstAccount, value: 0 },
     );
 
@@ -180,7 +180,7 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(finalIdIndex.toString(), (initIdIndex.add(web3.utils.toBN('1'))).toString());
   });
 
-  it('Place an order from the First Account. Place an order that DO NOT MATCH from the Second Account.', async () => {
+  it('Place a limit order from the First Account. Place a limit order that DO NOT MATCH from the Second Account.', async () => {
     // deposit some ETH to firstAccount
     const befDepEthBalFirst = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
     await dexInstance.deposit({ from: firstAccount, value: depAmountEth });
@@ -213,7 +213,7 @@ contract('TestResardis-Trading', async accounts => {
 
     const initCounterOfferMadeFirst = counterOfferMadeFirst;
     await dexInstance.offer(
-      amountGiveEthNonMatch, addressZero, amountGetTokenNonMatch, tokenAddress, 0,
+      amountGiveEthNonMatch, addressZero, amountGetTokenNonMatch, tokenAddress, 0, true, 0,
       { from: firstAccount, value: 0 },
     );
 
@@ -224,7 +224,7 @@ contract('TestResardis-Trading', async accounts => {
 
     const initCounterOfferMadeSec = counterOfferMadeSec;
     await dexInstance.offer(
-      amountGiveTokenNonMatch, tokenAddress, amountGetEthNonMatch, addressZero, 0,
+      amountGiveTokenNonMatch, tokenAddress, amountGetEthNonMatch, addressZero, 0, true, 0,
       { from: secAccount, value: 0 },
     );
     counterOfferMadeTotal++;
