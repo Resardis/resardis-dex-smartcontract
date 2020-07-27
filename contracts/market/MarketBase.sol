@@ -325,8 +325,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         if (offers[id].payAmt == 0) {
             delete offers[id];
             offerHistorical.filled = true;
-            offerHistorical.filledPayAmt = offer.payAmt;
-            offerHistorical.filledBuyAmt = offer.buyAmt;
         }
 
         return true;
