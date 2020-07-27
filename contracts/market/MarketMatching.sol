@@ -38,40 +38,21 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     // ---- Public entrypoints ---- //
 
-    function take(bytes32 id, uint128 maxTakeAmount) public {
-        require(buy(uint256(id), maxTakeAmount));
-    }
-
     // Make a new offer. Takes funds from the caller into market escrow.
     function offer(
         uint256 payAmt, //maker (ask) sell how much
         address payGem, //maker (ask) sell which token
         uint256 buyAmt, //maker (ask) buy how much
         address buyGem, //maker (ask) buy which token
-        uint256 pos //position to insert offer, 0 should be used if unknown
-    ) public returns (uint256) {
-        return offer(payAmt, payGem, buyAmt, buyGem, pos, true);
-    }
-
-    function offer(
-        uint256 payAmt, //maker (ask) sell how much
-        address payGem, //maker (ask) sell which token
-        uint256 buyAmt, //maker (ask) buy how much
-        address buyGem, //maker (ask) buy which token
         uint256 pos, //position to insert offer, 0 should be used if unknown
-        bool rounding //match "close enough" orders?
+        bool rounding, //match "close enough" orders?
+        uint8 offerType
     ) public returns (uint256) {
         require(!_locked, "Reentrancy attempt");
         require(dust[address(payGem)] <= payAmt);
+        require(availableOfferTypes[offerType]);
 
-        return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding);
-    }
-
-    //Transfers funds from caller to offer maker, and from market to caller.
-    function buy(uint256 id, uint256 amount) public can_buy(id) returns (bool) {
-        require(!_locked, "Reentrancy attempt");
-
-        return _buys(id, amount);
+        return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding, offerType);
     }
 
     // Cancel an offer. Refunds offer maker.
@@ -166,7 +147,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //Decrease amount to sell
                 payAmt = sub(payAmt, offers[offerId].buyAmt);
                 //We take the whole offer
-                take(bytes32(offerId), uint128(offers[offerId].payAmt));
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt));
             } else {
                 // if lower
                 uint256 baux = rmul(
@@ -176,7 +157,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //Add amount bought to acumulator
                 fillAmt = add(fillAmt, baux);
                 //We take the portion of the offer that we need
-                take(bytes32(offerId), uint128(baux));
+                _take(bytes32(offerId), uint128(baux));
                 payAmt = 0; //All amount is sold
             }
         }
@@ -207,7 +188,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 //If amount to buy is higher or equal than current offer amount to sell
                 fillAmt = add(fillAmt, offers[offerId].buyAmt); //Add amount sold to acumulator
                 buyAmt = sub(buyAmt, offers[offerId].payAmt); //Decrease amount to buy
-                take(bytes32(offerId), uint128(offers[offerId].payAmt)); //We take the whole offer
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt)); //We take the whole offer
             } else {
                 //if lower
                 fillAmt = add(
@@ -218,7 +199,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                     ) / 10**9
                 ); //Add amount sold to acumulator
                 //We take the portion of the offer that we need
-                take(bytes32(offerId), uint128(buyAmt));
+                _take(bytes32(offerId), uint128(buyAmt));
                 buyAmt = 0; //All amount is bought
             }
         }
@@ -275,13 +256,16 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     // ---- Internal Functions ---- //
 
-    function _buys(uint256 id, uint256 amount) internal returns (bool) {
+    //Transfers funds from caller to offer maker, and from market to caller.
+    function _buy(uint256 id, uint256 amount) internal can_buy(id) returns (bool) {
+        require(!_locked, "Reentrancy attempt");
+
         if (amount == offers[id].payAmt) {
             //offers[id] must be removed from sorted list because all of it is bought
             _unsort(id);
         }
 
-        require(super.buy(id, amount));
+        require(super._buy(id, amount));
         // If offer has become dust during buy, we cancel it
         if (
             isActive(id) &&
@@ -292,6 +276,10 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         }
 
         return true;
+    }
+
+    function _take(bytes32 id, uint128 maxTakeAmount) internal {
+        require(_buy(uint256(id), maxTakeAmount));
     }
 
     //find the id of the next higher offer after offers[id]
@@ -366,18 +354,36 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 tBuyAmt, //taker buy how much
         address tBuyGem, //taker buy which token
         uint256 pos, //position id
-        bool rounding //match "close enough" orders?
+        bool rounding, //match "close enough" orders?
+        uint8 offerType
     ) internal returns (uint256 id) {
-        uint256 bestMakerId; //highest maker id
+        uint256 tPayAmtInit = tPayAmt;
         uint256 tBuyAmtOld; //taker buy how much saved
         uint256 mBuyAmt; //maker offer wants to buy this much token
         uint256 mPayAmt; //maker offer wants to sell this much token
 
-        // there is at least one offer stored for token pair
+        // Init offer history
+        OfferInfoHistory memory infoHistory;
+        infoHistory.payAmt = tPayAmt;
+        infoHistory.payGem = tPayGem;
+        infoHistory.buyAmt = tBuyAmt;
+        infoHistory.buyGem = tBuyGem;
+        infoHistory.owner = msg.sender;
+        infoHistory.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+        infoHistory.id = uint256(0);
+        infoHistory.cancelled = false;
+        infoHistory.filled = false;
+        infoHistory.filledPayAmt = uint256(0);
+        infoHistory.filledBuyAmt = uint256(0);
+        infoHistory.offerType = offerType;
+
+        // There is at least one offer stored for token pair
+        // If "buy" is executed within the while loop, the sender becomes taker
+        // This can happen with both market and limit order
         while (best[address(tBuyGem)][address(tPayGem)] > 0) {
-            bestMakerId = best[address(tBuyGem)][address(tPayGem)];
-            mBuyAmt = offers[bestMakerId].buyAmt;
-            mPayAmt = offers[bestMakerId].payAmt;
+            // best[address][address] gets the best maker ID
+            mBuyAmt = offers[best[address(tBuyGem)][address(tPayGem)]].buyAmt;
+            mPayAmt = offers[best[address(tBuyGem)][address(tPayGem)]].payAmt;
 
             // Ugly hack to work around rounding errors. Based on the idea that
             // the furthest the amounts can stray from their "true" values is 1.
@@ -394,22 +400,48 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             }
             // ^ The `rounding` parameter is a compromise borne of a couple days
             // of discussion.
-            buy(bestMakerId, min(mPayAmt, tBuyAmt));
+            _buy(best[address(tBuyGem)][address(tPayGem)], min(mPayAmt, tBuyAmt));
             tBuyAmtOld = tBuyAmt;
             tBuyAmt = sub(tBuyAmt, min(mPayAmt, tBuyAmt));
             tPayAmt = mul(tBuyAmt, tPayAmt) / tBuyAmtOld;
 
+            infoHistory.filledPayAmt = sub(tPayAmtInit, tPayAmt);
+            infoHistory.filledBuyAmt = add(infoHistory.filledBuyAmt, min(mPayAmt, tBuyAmt));
+
             if (tPayAmt == 0 || tBuyAmt == 0) {
+                infoHistory.filled = true;
                 break;
             }
         }
 
-        if (tBuyAmt > 0 && tPayAmt > 0 && tPayAmt >= dust[address(tPayGem)]) {
-            //new offer should be created
-            id = super.offer(tPayAmt, tPayGem, tBuyAmt, tBuyGem);
-            //insert offer into the sorted list
-            _sort(id, pos);
+        // offerType = 0 -> Limit Order
+        // Market order never puts a new offer
+        // Market order acts as Immediate-or-Cancel order,
+        // and fills as much as possible, the remaining amount is cancelled
+        // if there is any
+        if (offerType  == uint8(0)) {
+            // Limit orders are given with an ID
+            // Below makes the sender a maker as it sets a new offer
+            if (tBuyAmt > 0 && tPayAmt > 0 && tPayAmt >= dust[address(tPayGem)]) {
+                //new offer should be created
+                id = _offer(tPayAmt, tPayGem, tBuyAmt, tBuyGem);
+                //insert offer into the sorted list
+                _sort(id, pos);
+
+                offersHistoryIndices[msg.sender][id] = _nextIndex();
+
+                infoHistory.id = id;
+                offersHistory[msg.sender].push(infoHistory);
+            }
+        } else if (offerType  == uint8(1)) { // offerType = 1 -> Market Order
+            // Market orders are not given an ID
+            // Increase the history index as we push to the array
+            // But do not update offersHistoryIndices as this order
+            // does not have an ID
+            _nextIndex();
+            offersHistory[msg.sender].push(infoHistory);
         }
+
     }
 
     //put offer into the sorted list
