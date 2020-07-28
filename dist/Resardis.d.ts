@@ -24,6 +24,10 @@ interface ResardisInterface extends Interface {
 
     authority: TypedFunctionDescription<{ encode([]: []): string }>;
 
+    availableOfferTypes: TypedFunctionDescription<{
+      encode([]: [BigNumberish]): string;
+    }>;
+
     balanceInUse: TypedFunctionDescription<{
       encode([token, user]: [string, string]): string;
     }>;
@@ -33,10 +37,6 @@ interface ResardisInterface extends Interface {
     }>;
 
     best: TypedFunctionDescription<{ encode([,]: [string, string]): string }>;
-
-    buy: TypedFunctionDescription<{
-      encode([id, amount]: [BigNumberish, BigNumberish]): string;
-    }>;
 
     buyAllAmount: TypedFunctionDescription<{
       encode([buyGem, buyAmt, payGem, maxFillAmount]: [
@@ -57,7 +57,15 @@ interface ResardisInterface extends Interface {
       ]): string;
     }>;
 
+    changeAvailableOfferType: TypedFunctionDescription<{
+      encode([offerType, state]: [BigNumberish, boolean]): string;
+    }>;
+
     deposit: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    depositHistory: TypedFunctionDescription<{
+      encode([, ,]: [string, string, BigNumberish]): string;
+    }>;
 
     depositToken: TypedFunctionDescription<{
       encode([token, amount]: [string, BigNumberish]): string;
@@ -138,11 +146,13 @@ interface ResardisInterface extends Interface {
     }>;
 
     offer: TypedFunctionDescription<{
-      encode([payAmt, payGem, buyAmt, buyGem, pos]: [
+      encode([payAmt, payGem, buyAmt, buyGem, pos, rounding, offerType]: [
         BigNumberish,
         string,
         BigNumberish,
         string,
+        BigNumberish,
+        boolean,
         BigNumberish
       ]): string;
     }>;
@@ -182,10 +192,6 @@ interface ResardisInterface extends Interface {
 
     span: TypedFunctionDescription<{ encode([,]: [string, string]): string }>;
 
-    take: TypedFunctionDescription<{
-      encode([id, maxTakeAmount]: [Arrayish, BigNumberish]): string;
-    }>;
-
     tokens: TypedFunctionDescription<{ encode([,]: [string, string]): string }>;
 
     tokensInUse: TypedFunctionDescription<{
@@ -194,6 +200,10 @@ interface ResardisInterface extends Interface {
 
     withdraw: TypedFunctionDescription<{
       encode([amount]: [BigNumberish]): string;
+    }>;
+
+    withdrawHistory: TypedFunctionDescription<{
+      encode([, ,]: [string, string, BigNumberish]): string;
     }>;
 
     withdrawToken: TypedFunctionDescription<{
@@ -352,17 +362,13 @@ export class Resardis extends Contract {
 
     authority(): Promise<string>;
 
+    availableOfferTypes(arg0: BigNumberish): Promise<boolean>;
+
     balanceInUse(token: string, user: string): Promise<BigNumber>;
 
     balanceOf(token: string, user: string): Promise<BigNumber>;
 
     best(arg0: string, arg1: string): Promise<BigNumber>;
-
-    buy(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
 
     buyAllAmount(
       buyGem: string,
@@ -384,7 +390,28 @@ export class Resardis extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
+    changeAvailableOfferType(
+      offerType: BigNumberish,
+      state: boolean,
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
+
     deposit(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
+    depositHistory(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish
+    ): Promise<{
+      token: string;
+      amount: BigNumber;
+      owner: string;
+      timestamp: BigNumber;
+      0: string;
+      1: BigNumber;
+      2: string;
+      3: BigNumber;
+    }>;
 
     depositToken(
       token: string,
@@ -415,6 +442,7 @@ export class Resardis extends Contract {
         filled: boolean;
         filledPayAmt: BigNumber;
         filledBuyAmt: BigNumber;
+        offerType: number;
         0: BigNumber;
         1: string;
         2: BigNumber;
@@ -426,6 +454,7 @@ export class Resardis extends Contract {
         8: boolean;
         9: BigNumber;
         10: BigNumber;
+        11: number;
       }[]
     >;
 
@@ -486,30 +515,14 @@ export class Resardis extends Contract {
 
     lastOffersHistoryIndex(arg0: string): Promise<BigNumber>;
 
-    "offer(uint256,address,uint256,address,uint256)"(
-      payAmt: BigNumberish,
-      payGem: string,
-      buyAmt: BigNumberish,
-      buyGem: string,
-      pos: BigNumberish,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
-
-    "offer(uint256,address,uint256,address,uint256,bool)"(
+    offer(
       payAmt: BigNumberish,
       payGem: string,
       buyAmt: BigNumberish,
       buyGem: string,
       pos: BigNumberish,
       rounding: boolean,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
-
-    "offer(uint256,address,uint256,address)"(
-      payAmt: BigNumberish,
-      payGem: string,
-      buyAmt: BigNumberish,
-      buyGem: string,
+      offerType: BigNumberish,
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
@@ -545,6 +558,7 @@ export class Resardis extends Contract {
       filled: boolean;
       filledPayAmt: BigNumber;
       filledBuyAmt: BigNumber;
+      offerType: number;
       0: BigNumber;
       1: string;
       2: BigNumber;
@@ -556,6 +570,7 @@ export class Resardis extends Contract {
       8: boolean;
       9: BigNumber;
       10: BigNumber;
+      11: number;
     }>;
 
     offersHistoryIndices(arg0: string, arg1: BigNumberish): Promise<BigNumber>;
@@ -599,12 +614,6 @@ export class Resardis extends Contract {
 
     span(arg0: string, arg1: string): Promise<BigNumber>;
 
-    take(
-      id: Arrayish,
-      maxTakeAmount: BigNumberish,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
-
     tokens(arg0: string, arg1: string): Promise<BigNumber>;
 
     tokensInUse(arg0: string, arg1: string): Promise<BigNumber>;
@@ -613,6 +622,21 @@ export class Resardis extends Contract {
       amount: BigNumberish,
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
+
+    withdrawHistory(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish
+    ): Promise<{
+      token: string;
+      amount: BigNumber;
+      owner: string;
+      timestamp: BigNumber;
+      0: string;
+      1: BigNumber;
+      2: string;
+      3: BigNumber;
+    }>;
 
     withdrawToken(
       token: string,
@@ -629,17 +653,13 @@ export class Resardis extends Contract {
 
   authority(): Promise<string>;
 
+  availableOfferTypes(arg0: BigNumberish): Promise<boolean>;
+
   balanceInUse(token: string, user: string): Promise<BigNumber>;
 
   balanceOf(token: string, user: string): Promise<BigNumber>;
 
   best(arg0: string, arg1: string): Promise<BigNumber>;
-
-  buy(
-    id: BigNumberish,
-    amount: BigNumberish,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
 
   buyAllAmount(
     buyGem: string,
@@ -661,7 +681,28 @@ export class Resardis extends Contract {
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
+  changeAvailableOfferType(
+    offerType: BigNumberish,
+    state: boolean,
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
+
   deposit(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
+  depositHistory(
+    arg0: string,
+    arg1: string,
+    arg2: BigNumberish
+  ): Promise<{
+    token: string;
+    amount: BigNumber;
+    owner: string;
+    timestamp: BigNumber;
+    0: string;
+    1: BigNumber;
+    2: string;
+    3: BigNumber;
+  }>;
 
   depositToken(
     token: string,
@@ -692,6 +733,7 @@ export class Resardis extends Contract {
       filled: boolean;
       filledPayAmt: BigNumber;
       filledBuyAmt: BigNumber;
+      offerType: number;
       0: BigNumber;
       1: string;
       2: BigNumber;
@@ -703,6 +745,7 @@ export class Resardis extends Contract {
       8: boolean;
       9: BigNumber;
       10: BigNumber;
+      11: number;
     }[]
   >;
 
@@ -763,30 +806,14 @@ export class Resardis extends Contract {
 
   lastOffersHistoryIndex(arg0: string): Promise<BigNumber>;
 
-  "offer(uint256,address,uint256,address,uint256)"(
-    payAmt: BigNumberish,
-    payGem: string,
-    buyAmt: BigNumberish,
-    buyGem: string,
-    pos: BigNumberish,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
-
-  "offer(uint256,address,uint256,address,uint256,bool)"(
+  offer(
     payAmt: BigNumberish,
     payGem: string,
     buyAmt: BigNumberish,
     buyGem: string,
     pos: BigNumberish,
     rounding: boolean,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
-
-  "offer(uint256,address,uint256,address)"(
-    payAmt: BigNumberish,
-    payGem: string,
-    buyAmt: BigNumberish,
-    buyGem: string,
+    offerType: BigNumberish,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
@@ -822,6 +849,7 @@ export class Resardis extends Contract {
     filled: boolean;
     filledPayAmt: BigNumber;
     filledBuyAmt: BigNumber;
+    offerType: number;
     0: BigNumber;
     1: string;
     2: BigNumber;
@@ -833,6 +861,7 @@ export class Resardis extends Contract {
     8: boolean;
     9: BigNumber;
     10: BigNumber;
+    11: number;
   }>;
 
   offersHistoryIndices(arg0: string, arg1: BigNumberish): Promise<BigNumber>;
@@ -876,12 +905,6 @@ export class Resardis extends Contract {
 
   span(arg0: string, arg1: string): Promise<BigNumber>;
 
-  take(
-    id: Arrayish,
-    maxTakeAmount: BigNumberish,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
-
   tokens(arg0: string, arg1: string): Promise<BigNumber>;
 
   tokensInUse(arg0: string, arg1: string): Promise<BigNumber>;
@@ -890,6 +913,21 @@ export class Resardis extends Contract {
     amount: BigNumberish,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
+
+  withdrawHistory(
+    arg0: string,
+    arg1: string,
+    arg2: BigNumberish
+  ): Promise<{
+    token: string;
+    amount: BigNumber;
+    owner: string;
+    timestamp: BigNumber;
+    0: string;
+    1: BigNumber;
+    2: string;
+    3: BigNumber;
+  }>;
 
   withdrawToken(
     token: string,
@@ -972,13 +1010,13 @@ export class Resardis extends Contract {
 
     authority(): Promise<BigNumber>;
 
+    availableOfferTypes(arg0: BigNumberish): Promise<BigNumber>;
+
     balanceInUse(token: string, user: string): Promise<BigNumber>;
 
     balanceOf(token: string, user: string): Promise<BigNumber>;
 
     best(arg0: string, arg1: string): Promise<BigNumber>;
-
-    buy(id: BigNumberish, amount: BigNumberish): Promise<BigNumber>;
 
     buyAllAmount(
       buyGem: string,
@@ -995,7 +1033,18 @@ export class Resardis extends Contract {
       withdrawPermit_: boolean
     ): Promise<BigNumber>;
 
+    changeAvailableOfferType(
+      offerType: BigNumberish,
+      state: boolean
+    ): Promise<BigNumber>;
+
     deposit(): Promise<BigNumber>;
+
+    depositHistory(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish
+    ): Promise<BigNumber>;
 
     depositToken(token: string, amount: BigNumberish): Promise<BigNumber>;
 
@@ -1055,7 +1104,9 @@ export class Resardis extends Contract {
       payGem: string,
       buyAmt: BigNumberish,
       buyGem: string,
-      pos: BigNumberish
+      pos: BigNumberish,
+      rounding: boolean,
+      offerType: BigNumberish
     ): Promise<BigNumber>;
 
     offers(arg0: BigNumberish): Promise<BigNumber>;
@@ -1083,13 +1134,17 @@ export class Resardis extends Contract {
 
     span(arg0: string, arg1: string): Promise<BigNumber>;
 
-    take(id: Arrayish, maxTakeAmount: BigNumberish): Promise<BigNumber>;
-
     tokens(arg0: string, arg1: string): Promise<BigNumber>;
 
     tokensInUse(arg0: string, arg1: string): Promise<BigNumber>;
 
     withdraw(amount: BigNumberish): Promise<BigNumber>;
+
+    withdrawHistory(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish
+    ): Promise<BigNumber>;
 
     withdrawToken(token: string, amount: BigNumberish): Promise<BigNumber>;
   };

@@ -482,6 +482,27 @@ const _abi = [
     constant: true,
     inputs: [
       {
+        internalType: "uint8",
+        name: "",
+        type: "uint8"
+      }
+    ],
+    name: "availableOfferTypes",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
         internalType: "address",
         name: "token",
         type: "address"
@@ -554,32 +575,6 @@ const _abi = [
     ],
     payable: false,
     stateMutability: "view",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256"
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256"
-      }
-    ],
-    name: "buy",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool"
-      }
-    ],
-    payable: false,
-    stateMutability: "nonpayable",
     type: "function"
   },
   {
@@ -666,11 +661,77 @@ const _abi = [
   },
   {
     constant: false,
+    inputs: [
+      {
+        internalType: "uint8",
+        name: "offerType",
+        type: "uint8"
+      },
+      {
+        internalType: "bool",
+        name: "state",
+        type: "bool"
+      }
+    ],
+    name: "changeAvailableOfferType",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: false,
     inputs: [],
     name: "deposit",
     outputs: [],
     payable: true,
     stateMutability: "payable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256"
+      }
+    ],
+    name: "depositHistory",
+    outputs: [
+      {
+        internalType: "address",
+        name: "token",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256"
+      },
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address"
+      },
+      {
+        internalType: "uint64",
+        name: "timestamp",
+        type: "uint64"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
     type: "function"
   },
   {
@@ -838,6 +899,11 @@ const _abi = [
             internalType: "uint256",
             name: "filledBuyAmt",
             type: "uint256"
+          },
+          {
+            internalType: "uint8",
+            name: "offerType",
+            type: "uint8"
           }
         ],
         internalType: "struct EternalStorage.OfferInfoHistory[]",
@@ -1280,52 +1346,16 @@ const _abi = [
         internalType: "uint256",
         name: "pos",
         type: "uint256"
-      }
-    ],
-    name: "offer",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256"
-      }
-    ],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "payAmt",
-        type: "uint256"
-      },
-      {
-        internalType: "address",
-        name: "payGem",
-        type: "address"
-      },
-      {
-        internalType: "uint256",
-        name: "buyAmt",
-        type: "uint256"
-      },
-      {
-        internalType: "address",
-        name: "buyGem",
-        type: "address"
-      },
-      {
-        internalType: "uint256",
-        name: "pos",
-        type: "uint256"
       },
       {
         internalType: "bool",
         name: "rounding",
         type: "bool"
+      },
+      {
+        internalType: "uint8",
+        name: "offerType",
+        type: "uint8"
       }
     ],
     name: "offer",
@@ -1333,42 +1363,6 @@ const _abi = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256"
-      }
-    ],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "payAmt",
-        type: "uint256"
-      },
-      {
-        internalType: "address",
-        name: "payGem",
-        type: "address"
-      },
-      {
-        internalType: "uint256",
-        name: "buyAmt",
-        type: "uint256"
-      },
-      {
-        internalType: "address",
-        name: "buyGem",
-        type: "address"
-      }
-    ],
-    name: "offer",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "id",
         type: "uint256"
       }
     ],
@@ -1492,6 +1486,11 @@ const _abi = [
         internalType: "uint256",
         name: "filledBuyAmt",
         type: "uint256"
+      },
+      {
+        internalType: "uint8",
+        name: "offerType",
+        type: "uint8"
       }
     ],
     payable: false,
@@ -1689,26 +1688,6 @@ const _abi = [
     type: "function"
   },
   {
-    constant: false,
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "id",
-        type: "bytes32"
-      },
-      {
-        internalType: "uint128",
-        name: "maxTakeAmount",
-        type: "uint128"
-      }
-    ],
-    name: "take",
-    outputs: [],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
     constant: true,
     inputs: [
       {
@@ -1773,6 +1752,52 @@ const _abi = [
     outputs: [],
     payable: false,
     stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256"
+      }
+    ],
+    name: "withdrawHistory",
+    outputs: [
+      {
+        internalType: "address",
+        name: "token",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256"
+      },
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address"
+      },
+      {
+        internalType: "uint64",
+        name: "timestamp",
+        type: "uint64"
+      }
+    ],
+    payable: false,
+    stateMutability: "view",
     type: "function"
   },
   {
