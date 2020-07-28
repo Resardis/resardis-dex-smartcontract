@@ -81,7 +81,7 @@ module.exports = {
     },
 
     matic_testnet: {
-      provider: () => new HDWalletProvider(mnemonic, `https://rpc-mumbai.matic.today`),
+      provider: () => new HDWalletProvider(mnemonic, `https://rpc-mumbai.matic.today`, 0, 10),
       network_id: 80001,
       confirmations: 2,
       timeoutBlocks: 200,
