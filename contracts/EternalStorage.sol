@@ -16,6 +16,11 @@ contract EternalStorage is DSMath {
 
     address public admin; //the admin address
 
+    struct LastPriceInfo {
+        uint256 price;
+        uint64 timestamp;
+    }
+
     struct DepositInfo {
         address token; // address of deposited token
         uint256 amount; // amount of deposited token
@@ -87,6 +92,24 @@ contract EternalStorage is DSMath {
     mapping(address => bool) public allowedWithdrawTokens;
     //mapping of available offer types to boolean (true=available)
     mapping(uint8 => bool) public availableOfferTypes;
+
+    /* MARKET LEVEL STORAGE */
+    // Open orders for a token pair
+    mapping(address => mapping(address => OfferInfo[])) public marketLevelOffers;
+    // (Executed trades) = (Market activity) for a token pair
+    // The first argument expected to be a base token
+    mapping(address => mapping(address => OfferInfo[])) public marketLevelTrades;
+    // The first argument expected to be a base token
+    mapping(address => mapping(address => LastPriceInfo)) public marketLastPrice;
+    // id to index
+    mapping(uint256 => uint256) public marketLevelOffersIndices;
+    // Base currency addresses (e.g. ETH, USDT etc.)
+    // In reality, it is just a virtual thing as the smart contract is agnostic
+    // Added for last price calculation for the front-end
+    mapping(address => bool) public baseTokens;
+
+    uint256 public lastMarketLevelOffersIndex;
+
 
     function deposit() external payable {
         tokens[address(0)][msg.sender] = add(
@@ -191,6 +214,13 @@ contract EternalStorage is DSMath {
     {
         require(msg.sender == admin);
         availableOfferTypes[offerType] = state;
+    }
+
+    function changeBaseToken(address token, bool state)
+        external
+    {
+        require(msg.sender == admin);
+        baseTokens[token] = state;
     }
 
     function balanceOf(address token, address user)

@@ -177,6 +177,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         uint256 idIndex = getIdIndexProcessed(msg.sender, id);
         offersHistory[msg.sender][idIndex].cancelled = true;
 
+        delete marketLevelOffers[offer.payGem][offer.buyGem][marketLevelOffersIndices[id]];
+
         emit LogItemUpdate(id);
         emit LogKill(
             bytes32(id),
@@ -226,6 +228,10 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         id = _nextId();
         offers[id] = info;
 
+        lastMarketLevelOffersIndex++;
+        marketLevelOffers[payGem][buyGem].push(info);
+        marketLevelOffersIndices[id] = sub(lastMarketLevelOffersIndex, uint256(1));
+
         tokensInUse[address(payGem)][msg.sender] = add(
             tokensInUse[address(payGem)][msg.sender],
             payAmt
@@ -257,6 +263,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         require(uint128(spend) == spend);
         require(uint128(quantity) == quantity);
+        // @TODO: Is below correct, shouldn't it be payGem???
         require(
             add(tokensInUse[address(offer.buyGem)][msg.sender], spend) <=
                 tokens[address(offer.buyGem)][msg.sender]
@@ -279,6 +286,36 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][idIndex];
         offerHistorical.filledPayAmt = add(offerHistorical.filledPayAmt, quantity);
         offerHistorical.filledBuyAmt = add(offerHistorical.filledBuyAmt, spend);
+
+        marketLevelOffers[offer.payGem][offer.buyGem][marketLevelOffersIndices[id]].payAmt = sub(offer.payAmt, quantity);
+        marketLevelOffers[offer.payGem][offer.buyGem][marketLevelOffersIndices[id]].buyAmt = sub(offer.buyAmt, spend);
+
+        // From taker's perspective, maker's payGem is buyGem, and vice versa
+        // The values below are from maker's perspective
+        OfferInfo memory trade;
+        trade.payAmt = quantity;
+        trade.payGem = offer.payGem;
+        trade.buyAmt = spend;
+        trade.buyGem = offer.buyGem;
+        trade.owner = offer.owner; // maker is the owner, no meaning really
+        trade.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+
+        LastPriceInfo memory lastPrice;
+
+        if (baseTokens[offer.payGem]) {
+            lastPrice.price = quantity / spend;
+            lastPrice.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+            marketLastPrice[offer.payGem][offer.buyGem] = lastPrice;
+
+            marketLevelTrades[offer.payGem][offer.buyGem].push(trade);
+
+        } else if (baseTokens[offer.buyGem]) {
+            lastPrice.price = spend / quantity;
+            lastPrice.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+            marketLastPrice[offer.buyGem][offer.payGem] = lastPrice;
+
+            marketLevelTrades[offer.buyGem][offer.payGem].push(trade);
+        }
 
         // @TODO: Check Re-entrancy for msg.sender
         tokensInUse[address(offer.payGem)][offer.owner] = sub(
@@ -324,6 +361,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         if (offers[id].payAmt == 0) {
             delete offers[id];
+            delete marketLevelOffers[offer.payGem][offer.buyGem][marketLevelOffersIndices[id]];
             offerHistorical.filled = true;
         }
 
