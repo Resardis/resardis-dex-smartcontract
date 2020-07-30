@@ -29,6 +29,8 @@ module.exports = async (deployer, network, accounts) => {
     await dexInstance.changeAvailableOfferType(0, true, { from: admin });
     // Allow Market Order
     await dexInstance.changeAvailableOfferType(1, true, { from: admin });
+    // Set A token pair base
+    await dexInstance.changeBaseToken(addressZero, true, { from: admin });
     // Deposit some ETH
     await dexInstance.deposit({ from: secAccount, value: depAmountEth });
 
