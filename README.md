@@ -120,8 +120,13 @@ Last: Check chained import references in expiring and matching.
 + Unsorted list and keepers:
 > If matchingEnabled true(default), then inserted offers are matched. Except the ones inserted by contracts, because those end up in the unsorted list of offers, that must be later sorted by keepers using insert(). If matchingEnabled is false then MatchingMarket is reverted to ExpiringMarket, and matching is not done, and sorted lists are disabled.
 
-+ Error messages to all require().
++ Error messages to all `require()`. Note that this also increases the bytecode size. Keep them short and use error codes.
 + Cancel dust amount somewhere automatically.
 + Rounding precision and function overloading in offer method.
-+ _findpos() and _find() and hinting mechanism
-+ _matcho unnecessarily loops if the token balance is not sufficient.
++ `_findpos()` and `_find()` and hinting mechanism
++ `_matcho` unnecessarily loops if the token balance is not sufficient.
++ `tokensInUse` and `tokens` balances check in higher level: maybe in `_matcho()` or `offer()`.
++ Gas optimization, variable packing. Specifically, optimization for the while loop in `_matcho()`
++ Array slicing and performance consideration.
++ Remove all the work involving changes and removals of array elements and migrate those to `TheGraph`. For the time being, certain things like market level histories are in the storage.
++ Re-increase `solc optimizer runs` after reducing the bytecode size in high run numbers.
