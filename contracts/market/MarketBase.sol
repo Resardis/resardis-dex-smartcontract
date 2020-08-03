@@ -10,7 +10,8 @@ contract EventfulMarket {
         uint256 payAmt,
         address indexed payGem,
         uint256 buyAmt,
-        address indexed buyGem
+        address indexed buyGem,
+        uint64 indexed timestamp
     );
 
     event LogMake(
@@ -21,7 +22,9 @@ contract EventfulMarket {
         address buyGem,
         uint128 payAmt,
         uint128 buyAmt,
-        uint64 timestamp
+        uint64 timestamp,
+        uint8 offerType
+
     );
 
     event LogTake(
@@ -33,7 +36,8 @@ contract EventfulMarket {
         address indexed taker,
         uint128 takeAmt,
         uint128 giveAmt,
-        uint64 timestamp
+        uint64 timestamp,
+        uint8 offerType
     );
 
     event LogKill(
@@ -200,7 +204,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         uint256 payAmt,
         address payGem,
         uint256 buyAmt,
-        address buyGem
+        address buyGem,
+        uint8 offerType
     ) internal synchronized returns (uint256 id) {
         require(uint128(payAmt) == payAmt);
         require(uint128(buyAmt) == buyAmt);
@@ -240,13 +245,14 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
             buyGem,
             uint128(payAmt),
             uint128(buyAmt),
-            uint64(now) // solhint-disable-line not-rely-on-time
+            uint64(now), // solhint-disable-line not-rely-on-time
+            uint8(offerType)
         );
     }
 
     // Accept given `quantity` of an offer. Transfers funds from caller to
     // offer maker, and from market to caller.
-    function _buy(uint256 id, uint256 quantity)
+    function _buy(uint256 id, uint256 quantity, uint8 offerType)
         internal
         can_buy(id)
         synchronized
@@ -275,8 +281,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         offers[id].payAmt = sub(offer.payAmt, quantity);
         offers[id].buyAmt = sub(offer.buyAmt, spend);
 
-        uint256 idIndex = getIdIndexProcessed(offer.owner, id);
-        OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][idIndex];
+        OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][getIdIndexProcessed(offer.owner, id)];
         offerHistorical.filledPayAmt = add(offerHistorical.filledPayAmt, quantity);
         offerHistorical.filledBuyAmt = add(offerHistorical.filledBuyAmt, spend);
 
@@ -313,13 +318,15 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
             msg.sender,
             uint128(quantity),
             uint128(spend),
-            uint64(now) // solhint-disable-line not-rely-on-time
+            uint64(now), // solhint-disable-line not-rely-on-time
+            uint8(offerType)
         );
         emit LogTrade(
             quantity,
             address(offer.payGem),
             spend,
-            address(offer.buyGem)
+            address(offer.buyGem),
+            uint64(now) // solhint-disable-line not-rely-on-time
         );
 
         if (offers[id].payAmt == 0) {
@@ -330,8 +337,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return true;
     }
 
-    function _take(bytes32 id, uint128 maxTakeAmount) internal {
-        require(_buy(uint256(id), maxTakeAmount));
+    function _take(bytes32 id, uint128 maxTakeAmount, uint8 offerType) internal {
+        require(_buy(uint256(id), maxTakeAmount, offerType));
     }
 
     function _nextId() internal returns (uint256) {

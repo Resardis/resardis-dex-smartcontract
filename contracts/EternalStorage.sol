@@ -5,27 +5,40 @@ import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";
 
 contract EternalStorage is DSMath {
-    event Deposit(address token, address user, uint256 amount, uint256 balance);
-
-    event Withdraw(
-        address token,
-        address user,
+    event LogDeposit(
+        address indexed token,
+        address indexed user,
         uint256 amount,
         uint256 balance
     );
 
+    event LogWithdraw(
+        address indexed token,
+        address indexed user,
+        uint256 amount,
+        uint256 balance
+    );
+
+    event LogAllowedDepositToken(
+        address token,
+        bool state
+    );
+
+    event LogAllowedWithdrawToken(
+        address token,
+        bool state
+    );
+
+    event LogOfferType(
+        uint8 offerType,
+        bool state
+    );
+
     address public admin; //the admin address
 
-    struct DepositInfo {
-        address token; // address of deposited token
-        uint256 amount; // amount of deposited token
-        address owner;
-        uint64 timestamp;
-    }
-
-    struct WithdrawInfo {
-        address token; // address of deposited token
-        uint256 amount; // amount of deposited token
+    struct DepositWithdrawInfo {
+        address token; // address of deposited/withdrawn token
+        uint256 amount; // amount of deposited/withdrawn token
         address owner;
         uint64 timestamp;
     }
@@ -67,10 +80,9 @@ contract EternalStorage is DSMath {
     //locked = in use = this amount of tokens is currently in order book
     mapping(address => mapping(address => uint256)) public tokensInUse;
     //mapping of accounts to mapping of token addresses to deposit info (token=0 => Ether)
-    mapping(address => mapping(address => DepositInfo[])) public depositHistory;
+    mapping(address => mapping(address => DepositWithdrawInfo[])) public depositHistory;
     //mapping of accounts to mapping of token addresses to withdraw info (token=0 => Ether)
-    mapping(address => mapping(address => WithdrawInfo[]))
-        public withdrawHistory;
+    mapping(address => mapping(address => DepositWithdrawInfo[])) public withdrawHistory;
     //mapping of user accounts to mapping of OfferInfoHistory array
     mapping(address => OfferInfoHistory[]) public offersHistory;
     //mapping of user accounts to the (last index no of offersHistory + 1)
@@ -85,8 +97,9 @@ contract EternalStorage is DSMath {
     //mapping of token addresses to permission.
     //If true, token is allowed to be withdrawed.
     mapping(address => bool) public allowedWithdrawTokens;
-    //mapping of available offer types to boolean (true=available)
-    mapping(uint8 => bool) public availableOfferTypes;
+    //mapping of available offer types to boolean (true=present)
+    //0->Limit, 1->Market, 2->Fill-or-Kill
+    mapping(uint8 => bool) public offerTypes;
 
     function deposit() external payable {
         tokens[address(0)][msg.sender] = add(
@@ -94,15 +107,14 @@ contract EternalStorage is DSMath {
             msg.value
         );
 
-        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
-        DepositInfo memory depositInfo;
+        DepositWithdrawInfo memory depositInfo;
         depositInfo.token = address(0);
         depositInfo.amount = msg.value;
         depositInfo.owner = msg.sender;
-        depositInfo.timestamp = currentTime;
+        depositInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         depositHistory[msg.sender][address(0)].push(depositInfo);
 
-        emit Deposit(
+        emit LogDeposit(
             address(0),
             msg.sender,
             msg.value,
@@ -117,17 +129,16 @@ contract EternalStorage is DSMath {
             amount
         );
 
-        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
-        WithdrawInfo memory withdrawInfo;
+        DepositWithdrawInfo memory withdrawInfo;
         withdrawInfo.token = address(0);
         withdrawInfo.amount = amount;
         withdrawInfo.owner = msg.sender;
-        withdrawInfo.timestamp = currentTime;
+        withdrawInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         withdrawHistory[msg.sender][address(0)].push(withdrawInfo);
 
         msg.sender.transfer(amount);
 
-        emit Withdraw(
+        emit LogWithdraw(
             address(0),
             msg.sender,
             amount,
@@ -143,17 +154,16 @@ contract EternalStorage is DSMath {
 
         tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
 
-        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
-        DepositInfo memory depositInfo;
+        DepositWithdrawInfo memory depositInfo;
         depositInfo.token = token;
         depositInfo.amount = amount;
         depositInfo.owner = msg.sender;
-        depositInfo.timestamp = currentTime;
+        depositInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         depositHistory[msg.sender][token].push(depositInfo);
 
         require(IERC20(token).transferFrom(msg.sender, address(this), amount));
 
-        emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit LogDeposit(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
     function withdrawToken(address token, uint256 amount) external {
@@ -161,19 +171,18 @@ contract EternalStorage is DSMath {
         require(allowedWithdrawTokens[token] == true);
         require(tokens[token][msg.sender] >= amount);
 
-        uint64 currentTime = uint64(now); // solhint-disable-line not-rely-on-time
-        WithdrawInfo memory withdrawInfo;
+        DepositWithdrawInfo memory withdrawInfo;
         withdrawInfo.token = token;
         withdrawInfo.amount = amount;
         withdrawInfo.owner = msg.sender;
-        withdrawInfo.timestamp = currentTime;
+        withdrawInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         withdrawHistory[msg.sender][token].push(withdrawInfo);
 
         tokens[token][msg.sender] = sub(tokens[token][msg.sender], amount);
 
         require(IERC20(token).transfer(msg.sender, amount));
 
-        emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+        emit LogWithdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
     function changeAllowedToken(
@@ -184,13 +193,21 @@ contract EternalStorage is DSMath {
         require(msg.sender == admin);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
+
+        emit LogAllowedDepositToken(token_, depositPermit_);
+        emit LogAllowedWithdrawToken(token_, withdrawPermit_);
     }
 
-    function changeAvailableOfferType(uint8 offerType, bool state)
+    function setOfferType(
+        uint8 offerType,
+        bool state
+    )
         external
     {
         require(msg.sender == admin);
-        availableOfferTypes[offerType] = state;
+        offerTypes[offerType] = state;
+
+        emit LogOfferType(offerType, state);
     }
 
     function balanceOf(address token, address user)
