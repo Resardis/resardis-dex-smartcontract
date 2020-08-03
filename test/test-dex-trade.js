@@ -69,17 +69,17 @@ contract('TestResardis-Trading', async accounts => {
     // Get initial values
     const currentAdmin = await dexInstance.admin.call();
 
-    const initLimit = await dexInstance.availableOfferTypes.call(0);
-    const initMarket = await dexInstance.availableOfferTypes.call(1);
+    const initLimit = await dexInstance.offerTypes.call(0);
+    const initMarket = await dexInstance.offerTypes.call(1);
 
     // Allow Limit Order
-    await dexInstance.changeAvailableOfferType(0, true, { from: currentAdmin });
+    await dexInstance.setOfferType(0, true, { from: currentAdmin });
     // Allow Market Order
-    await dexInstance.changeAvailableOfferType(1, true, { from: currentAdmin });
+    await dexInstance.setOfferType(1, true, { from: currentAdmin });
 
     // Get final values
-    const finalLimit = await dexInstance.availableOfferTypes.call(0);
-    const finalMarket = await dexInstance.availableOfferTypes.call(1);
+    const finalLimit = await dexInstance.offerTypes.call(0);
+    const finalMarket = await dexInstance.offerTypes.call(1);
 
     assert.isFalse(initLimit);
     assert.isFalse(initMarket);
