@@ -125,3 +125,5 @@ Last: Check chained import references in expiring and matching.
 + Rounding precision and function overloading in offer method.
 + _findpos() and _find() and hinting mechanism
 + _matcho unnecessarily loops if the token balance is not sufficient.
++ Permanent order history in Fill-or-kill order types
++ Non-functional whitelisted tokens
