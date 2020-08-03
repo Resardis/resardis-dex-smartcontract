@@ -55,11 +55,6 @@ contract EventfulMarket {
 // @TODO: Check contract inheritence in Solidity
 // @TODO: DSMath was removed as it is imported in EternalStorage
 contract SimpleMarket is EternalStorage, EventfulMarket {
-    uint256 public lastOfferId;
-
-    mapping(uint256 => OfferInfo) public offers;
-
-    bool internal _locked;
 
     modifier can_buy(uint256 id) {
         require(isActive(id));

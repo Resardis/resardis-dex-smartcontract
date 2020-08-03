@@ -36,11 +36,24 @@ contract EternalStorage is DSMath {
 
     address public admin; //the admin address
 
+    uint256 public lastOfferId; // id of the last offer
+
+    uint256 public dustId; // id of the latest offer marked as dust
+
+    bool internal _locked;  // re-entrancy protection
+
     struct DepositWithdrawInfo {
         address token; // address of deposited/withdrawn token
         uint256 amount; // amount of deposited/withdrawn token
         address owner;
         uint64 timestamp;
+    }
+
+
+    struct SortInfo {
+        uint256 next; //points to id of next higher offer
+        uint256 prev; //points to id of previous lower offer
+        uint256 delb; //the blocknumber where this entry was marked for delete
     }
 
     // OfferInfo is used in volatile offer book
@@ -83,6 +96,10 @@ contract EternalStorage is DSMath {
     mapping(address => mapping(address => DepositWithdrawInfo[])) public depositHistory;
     //mapping of accounts to mapping of token addresses to withdraw info (token=0 => Ether)
     mapping(address => mapping(address => DepositWithdrawInfo[])) public withdrawHistory;
+    //doubly linked lists of sorted offer ids
+    mapping(uint256 => SortInfo) public rank;
+    //mapping of offer IDs to offer info, volatile order book
+    mapping(uint256 => OfferInfo) public offers;
     //mapping of user accounts to mapping of OfferInfoHistory array
     mapping(address => OfferInfoHistory[]) public offersHistory;
     //mapping of user accounts to the (last index no of offersHistory + 1)
@@ -93,6 +110,12 @@ contract EternalStorage is DSMath {
     mapping(address => mapping(uint256 => uint256)) public offersHistoryIndices;
     //mapping of token addresses to permission.
     //If true, token is allowed to be deposited/traded/ordered.
+    //id of the highest offer for a token pair
+    mapping(address => mapping(address => uint256)) public best;
+    //number of offers stored for token pair in sorted orderbook
+    mapping(address => mapping(address => uint256)) public span;
+    //minimum sell amount for a token to avoid dust offers
+    mapping(address => uint256) public dust;
     mapping(address => bool) public allowedDepositTokens;
     //mapping of token addresses to permission.
     //If true, token is allowed to be withdrawed.
@@ -100,6 +123,7 @@ contract EternalStorage is DSMath {
     //mapping of available offer types to boolean (true=present)
     //0->Limit, 1->Market, 2->Fill-or-Kill
     mapping(uint8 => bool) public offerTypes;
+
 
     function deposit() external payable {
         tokens[address(0)][msg.sender] = add(

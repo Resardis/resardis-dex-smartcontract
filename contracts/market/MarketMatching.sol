@@ -11,21 +11,6 @@ contract MatchingEvents {
 }
 
 contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
-    struct SortInfo {
-        uint256 next; //points to id of next higher offer
-        uint256 prev; //points to id of previous lower offer
-        uint256 delb; //the blocknumber where this entry was marked for delete
-    }
-    //doubly linked lists of sorted offer ids
-    mapping(uint256 => SortInfo) public rank;
-    //id of the highest offer for a token pair
-    mapping(address => mapping(address => uint256)) public best;
-    //number of offers stored for token pair in sorted orderbook
-    mapping(address => mapping(address => uint256)) public span;
-    //minimum sell amount for a token to avoid dust offers
-    mapping(address => uint256) public dust;
-    // id of the latest offer marked as dust
-    uint256 public dustId;
 
     modifier can_cancel(uint256 id) {
         require(isActive(id), "Offer was deleted or taken, or never existed.");
