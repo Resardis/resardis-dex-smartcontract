@@ -125,3 +125,9 @@ Last: Check chained import references in expiring and matching.
 + Rounding precision and function overloading in offer method.
 + _findpos() and _find() and hinting mechanism
 + _matcho unnecessarily loops if the token balance is not sufficient.
++ Permanent order history in Fill-or-kill order types
++ Non-functional whitelisted tokens
++ `tokensInUse` and `tokens` balances check in higher level: maybe in `_matcho()` or `offer()`.
++ Gas optimization, variable packing. Specifically, optimization for the while loop in `_matcho()`. Also, observe the bytecode size.
++ Array slicing and performance consideration.
++ Remove all the work involving changes and removals of array elements and migrate those to `TheGraph`.

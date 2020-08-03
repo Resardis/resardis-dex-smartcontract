@@ -26,9 +26,9 @@ module.exports = async (deployer, network, accounts) => {
     const dexInstance = await Resardis.deployed();
 
     // Allow Limit Order
-    await dexInstance.changeAvailableOfferType(0, true, { from: admin });
+    await dexInstance.setOfferType(0, true, { from: admin });
     // Allow Market Order
-    await dexInstance.changeAvailableOfferType(1, true, { from: admin });
+    await dexInstance.setOfferType(1, true, { from: admin });
     // Deposit some ETH
     await dexInstance.deposit({ from: secAccount, value: depAmountEth });
 
