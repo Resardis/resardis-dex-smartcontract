@@ -24,7 +24,6 @@ contract EventfulMarket {
         uint128 buyAmt,
         uint64 timestamp,
         uint8 offerType
-
     );
 
     event LogTake(
@@ -55,7 +54,6 @@ contract EventfulMarket {
 // @TODO: Check contract inheritence in Solidity
 // @TODO: DSMath was removed as it is imported in EternalStorage
 contract SimpleMarket is EternalStorage, EventfulMarket {
-
     modifier can_buy(uint256 id) {
         require(isActive(id));
         _;
@@ -135,11 +133,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return offerArray;
     }
 
-    function getIdIndexRaw(address owner, uint256 id)
-        public
-        view
-        returns (uint256)
-    {
+    function getIdIndexRaw(address owner, uint256 id) public view returns (uint256) {
         return offersHistoryIndices[owner][id];
     }
 
@@ -190,7 +184,6 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         success = true;
     }
-
 
     // ---- Internal Functions ---- //
 
@@ -247,12 +240,11 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
     // Accept given `quantity` of an offer. Transfers funds from caller to
     // offer maker, and from market to caller.
-    function _buy(uint256 id, uint256 quantity, uint8 offerType)
-        internal
-        can_buy(id)
-        synchronized
-        returns (bool)
-    {
+    function _buy(
+        uint256 id,
+        uint256 quantity,
+        uint8 offerType
+    ) internal can_buy(id) synchronized returns (bool) {
         OfferInfo memory offer = offers[id];
         uint256 spend = mul(quantity, offer.buyAmt) / offer.payAmt;
 
@@ -265,10 +257,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         // For backwards semantic compatibility.
         if (
-            quantity == 0 ||
-            spend == 0 ||
-            quantity > offer.payAmt ||
-            spend > offer.buyAmt
+            quantity == 0 || spend == 0 || quantity > offer.payAmt || spend > offer.buyAmt
         ) {
             return false;
         }
@@ -276,7 +265,8 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         offers[id].payAmt = sub(offer.payAmt, quantity);
         offers[id].buyAmt = sub(offer.buyAmt, spend);
 
-        OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][getIdIndexProcessed(offer.owner, id)];
+        OfferInfoHistory memory offerHistorical = offersHistory[offer
+            .owner][getIdIndexProcessed(offer.owner, id)];
         offerHistorical.filledPayAmt = add(offerHistorical.filledPayAmt, quantity);
         offerHistorical.filledBuyAmt = add(offerHistorical.filledBuyAmt, spend);
 
@@ -332,7 +322,11 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return true;
     }
 
-    function _take(bytes32 id, uint128 maxTakeAmount, uint8 offerType) internal {
+    function _take(
+        bytes32 id,
+        uint128 maxTakeAmount,
+        uint8 offerType
+    ) internal {
         require(_buy(uint256(id), maxTakeAmount, offerType));
     }
 

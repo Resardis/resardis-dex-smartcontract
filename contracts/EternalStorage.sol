@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";
 
+// solhint-disable-next-line max-states-count
 contract EternalStorage is DSMath {
     event LogDeposit(
         address indexed token,
@@ -19,20 +20,11 @@ contract EternalStorage is DSMath {
         uint256 balance
     );
 
-    event LogAllowedDepositToken(
-        address token,
-        bool state
-    );
+    event LogAllowedDepositToken(address token, bool state);
 
-    event LogAllowedWithdrawToken(
-        address token,
-        bool state
-    );
+    event LogAllowedWithdrawToken(address token, bool state);
 
-    event LogOfferType(
-        uint8 offerType,
-        bool state
-    );
+    event LogOfferType(uint8 offerType, bool state);
 
     address public admin; //the admin address
 
@@ -40,7 +32,7 @@ contract EternalStorage is DSMath {
 
     uint256 public dustId; // id of the latest offer marked as dust
 
-    bool internal _locked;  // re-entrancy protection
+    bool internal _locked; // re-entrancy protection
 
     struct DepositWithdrawInfo {
         address token; // address of deposited/withdrawn token
@@ -48,7 +40,6 @@ contract EternalStorage is DSMath {
         address owner;
         uint64 timestamp;
     }
-
 
     struct SortInfo {
         uint256 next; //points to id of next higher offer
@@ -124,12 +115,8 @@ contract EternalStorage is DSMath {
     //0->Limit, 1->Market, 2->Fill-or-Kill
     mapping(uint8 => bool) public offerTypes;
 
-
     function deposit() external payable {
-        tokens[address(0)][msg.sender] = add(
-            tokens[address(0)][msg.sender],
-            msg.value
-        );
+        tokens[address(0)][msg.sender] = add(tokens[address(0)][msg.sender], msg.value);
 
         DepositWithdrawInfo memory depositInfo;
         depositInfo.token = address(0);
@@ -148,10 +135,7 @@ contract EternalStorage is DSMath {
 
     function withdraw(uint256 amount) external {
         require(tokens[address(0)][msg.sender] >= amount);
-        tokens[address(0)][msg.sender] = sub(
-            tokens[address(0)][msg.sender],
-            amount
-        );
+        tokens[address(0)][msg.sender] = sub(tokens[address(0)][msg.sender], amount);
 
         DepositWithdrawInfo memory withdrawInfo;
         withdrawInfo.token = address(0);
@@ -162,12 +146,7 @@ contract EternalStorage is DSMath {
 
         msg.sender.transfer(amount);
 
-        emit LogWithdraw(
-            address(0),
-            msg.sender,
-            amount,
-            tokens[address(0)][msg.sender]
-        );
+        emit LogWithdraw(address(0), msg.sender, amount, tokens[address(0)][msg.sender]);
     }
 
     function depositToken(address token, uint256 amount) external {
@@ -222,47 +201,26 @@ contract EternalStorage is DSMath {
         emit LogAllowedWithdrawToken(token_, withdrawPermit_);
     }
 
-    function setOfferType(
-        uint8 offerType,
-        bool state
-    )
-        external
-    {
+    function setOfferType(uint8 offerType, bool state) external {
         require(msg.sender == admin);
         offerTypes[offerType] = state;
 
         emit LogOfferType(offerType, state);
     }
 
-    function balanceOf(address token, address user)
-        external
-        view
-        returns (uint256)
-    {
+    function balanceOf(address token, address user) external view returns (uint256) {
         return tokens[token][user];
     }
 
-    function balanceInUse(address token, address user)
-        external
-        view
-        returns (uint256)
-    {
+    function balanceInUse(address token, address user) external view returns (uint256) {
         return tokensInUse[token][user];
     }
 
-    function getAllowedDepositToken(address token_)
-        external
-        view
-        returns (bool)
-    {
+    function getAllowedDepositToken(address token_) external view returns (bool) {
         return allowedDepositTokens[token_];
     }
 
-    function getAllowedWithdrawToken(address token_)
-        external
-        view
-        returns (bool)
-    {
+    function getAllowedWithdrawToken(address token_) external view returns (bool) {
         return allowedWithdrawTokens[token_];
     }
 }
