@@ -4,8 +4,10 @@ pragma experimental ABIEncoderV2;
 import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";
 
+import "./ErrorCodes.sol";
+
 // solhint-disable-next-line max-states-count
-contract EternalStorage is DSMath {
+contract EternalStorage is ErrorCodes, DSMath {
     event LogDeposit(
         address indexed token,
         address indexed user,
@@ -134,7 +136,7 @@ contract EternalStorage is DSMath {
     }
 
     function withdraw(uint256 amount) external {
-        require(tokens[address(0)][msg.sender] >= amount);
+        require(tokens[address(0)][msg.sender] >= amount, _F101);
         tokens[address(0)][msg.sender] = sub(tokens[address(0)][msg.sender], amount);
 
         DepositWithdrawInfo memory withdrawInfo;
@@ -152,8 +154,8 @@ contract EternalStorage is DSMath {
     function depositToken(address token, uint256 amount) external {
         //remember to call Token(address).approve(this, amount)
         //or this contract will not be able to do the transfer on your behalf.
-        require(token != address(0));
-        require(allowedDepositTokens[token] == true);
+        require(token != address(0), _F102);
+        require(allowedDepositTokens[token] == true, _F103);
 
         tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
 
@@ -164,15 +166,15 @@ contract EternalStorage is DSMath {
         depositInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
         depositHistory[msg.sender][token].push(depositInfo);
 
-        require(IERC20(token).transferFrom(msg.sender, address(this), amount));
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), _F104);
 
         emit LogDeposit(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
     function withdrawToken(address token, uint256 amount) external {
-        require(token != address(0));
-        require(allowedWithdrawTokens[token] == true);
-        require(tokens[token][msg.sender] >= amount);
+        require(token != address(0), _F102);
+        require(allowedWithdrawTokens[token] == true, _F103);
+        require(tokens[token][msg.sender] >= amount, _F101);
 
         DepositWithdrawInfo memory withdrawInfo;
         withdrawInfo.token = token;
@@ -183,7 +185,7 @@ contract EternalStorage is DSMath {
 
         tokens[token][msg.sender] = sub(tokens[token][msg.sender], amount);
 
-        require(IERC20(token).transfer(msg.sender, amount));
+        require(IERC20(token).transfer(msg.sender, amount), _F104);
 
         emit LogWithdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
@@ -193,7 +195,7 @@ contract EternalStorage is DSMath {
         bool depositPermit_,
         bool withdrawPermit_
     ) external {
-        require(msg.sender == admin);
+        require(msg.sender == admin, _S101);
         allowedDepositTokens[token_] = depositPermit_;
         allowedWithdrawTokens[token_] = withdrawPermit_;
 
@@ -202,7 +204,7 @@ contract EternalStorage is DSMath {
     }
 
     function setOfferType(uint8 offerType, bool state) external {
-        require(msg.sender == admin);
+        require(msg.sender == admin, _S101);
         offerTypes[offerType] = state;
 
         emit LogOfferType(offerType, state);

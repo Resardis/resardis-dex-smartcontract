@@ -131,3 +131,4 @@ Last: Check chained import references in expiring and matching.
 + Gas optimization, variable packing. Specifically, optimization for the while loop in `_matcho()`. Also, observe the bytecode size.
 + Array slicing and performance consideration.
 + Remove all the work involving changes and removals of array elements and migrate those to `TheGraph`.
++ Bytecode size is now too big, thus we temporarily reduced `solc` optimizer runs from `999999990`. After the clean-up, this should be increased again.
