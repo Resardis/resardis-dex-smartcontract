@@ -12,11 +12,8 @@ contract MatchingEvents {
 
 contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     modifier can_cancel(uint256 id) {
-        require(isActive(id), "Offer was deleted or taken, or never existed.");
-        require(
-            msg.sender == getOwner(id) || id == dustId,
-            "Offer can not be cancelled: user is not the owner or offer is not dust."
-        );
+        require(isActive(id), _T101);
+        require(msg.sender == getOwner(id) || id == dustId, _S101);
         _;
     }
 
@@ -32,17 +29,17 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         bool rounding, //match "close enough" orders?
         uint8 offerType
     ) public returns (uint256) {
-        require(!_locked, "Reentrancy attempt");
-        require(dust[address(payGem)] <= payAmt);
-        require(offerTypes[offerType]);
+        require(!_locked, _S102);
+        require(dust[address(payGem)] <= payAmt, _T104);
+        require(offerTypes[offerType], _T103);
 
         return _matcho(payAmt, payGem, buyAmt, buyGem, pos, rounding, offerType);
     }
 
     // Cancel an offer. Refunds offer maker.
     function cancel(uint256 id) public can_cancel(id) returns (bool success) {
-        require(!_locked, "Reentrancy attempt");
-        require(_unsort(id));
+        require(!_locked, _S102);
+        require(_unsort(id), _T110);
 
         return super.cancel(id); //delete the offer.
     }
@@ -107,14 +104,14 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 minFillAmount,
         uint8 offerType
     ) public returns (uint256 fillAmt) {
-        require(!_locked, "Reentrancy attempt");
-        require(offerType == uint8(2));
+        require(!_locked, _S102);
+        require(offerType == uint8(2), _T103);
 
         uint256 offerId;
         while (payAmt > 0) {
             //while there is amount to sell
             offerId = getBestOffer(buyGem, payGem); //Get the best offer for the token pair
-            require(offerId != 0); //Fails if there are not more offers
+            require(offerId != 0, _T108); //Fails if there are not more offers
 
             // There is a chance that payAmt is smaller than 1 wei of the other token
             if (payAmt * 1 ether < wdiv(offers[offerId].buyAmt, offers[offerId].payAmt)) {
@@ -141,7 +138,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 payAmt = 0; //All amount is sold
             }
         }
-        require(fillAmt >= minFillAmount);
+        require(fillAmt >= minFillAmount, _T111);
     }
 
     function buyAllAmount(
@@ -151,14 +148,14 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 maxFillAmount,
         uint8 offerType
     ) public returns (uint256 fillAmt) {
-        require(!_locked, "Reentrancy attempt");
-        require(offerType == uint8(2));
+        require(!_locked, _S102);
+        require(offerType == uint8(2), _T103);
 
         uint256 offerId;
         while (buyAmt > 0) {
             //Meanwhile there is amount to buy
             offerId = getBestOffer(buyGem, payGem); //Get the best offer for the token pair
-            require(offerId != 0);
+            require(offerId != 0, _T108);
 
             // There is a chance that buyAmt is smaller than 1 wei of the other token
             if (buyAmt * 1 ether < wdiv(offers[offerId].payAmt, offers[offerId].buyAmt)) {
@@ -186,7 +183,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
                 buyAmt = 0; //All amount is bought
             }
         }
-        require(fillAmt <= maxFillAmount);
+        require(fillAmt <= maxFillAmount, _T112);
     }
 
     function getBuyAmount(
@@ -201,7 +198,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             if (payAmt > 0) {
                 //If we still need more offers
                 offerId = getWorseOffer(offerId); //We look for the next best offer
-                require(offerId != 0); //Fails if there are not enough offers to complete
+                require(offerId != 0, _T108); //Fails if there are not enough offers to complete
             }
         }
         fillAmt = add(
@@ -223,7 +220,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
             if (buyAmt > 0) {
                 //If we still need more offers
                 offerId = getWorseOffer(offerId); //We look for the next best offer
-                require(offerId != 0); //Fails if there are not enough offers to complete
+                require(offerId != 0, _T108); //Fails if there are not enough offers to complete
             }
         }
         fillAmt = add(
@@ -241,14 +238,14 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 amount,
         uint8 offerType
     ) internal can_buy(id) returns (bool) {
-        require(!_locked, "Reentrancy attempt");
+        require(!_locked, _S102);
 
         if (amount == offers[id].payAmt) {
             //offers[id] must be removed from sorted list because all of it is bought
             _unsort(id);
         }
 
-        require(super._buy(id, amount, offerType));
+        require(super._buy(id, amount, offerType), _T109);
         // If offer has become dust during buy, we cancel it
         if (isActive(id) && (offers[id].payAmt < dust[address(offers[id].payGem)])) {
             dustId = id; //enable current msg.sender to call cancel(id)
@@ -263,12 +260,12 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
-        require(_buy(uint256(id), maxTakeAmount, offerType));
+        require(_buy(uint256(id), maxTakeAmount, offerType), _T109);
     }
 
     //find the id of the next higher offer after offers[id]
     function _find(uint256 id) internal view returns (uint256) {
-        require(id > 0);
+        require(id > 0, _T102);
 
         address buyGem = address(offers[id].buyGem);
         address payGem = address(offers[id].payGem);
@@ -285,7 +282,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
     //find the id of the next higher offer after offers[id]
     function _findpos(uint256 id, uint256 pos) internal view returns (uint256) {
-        require(id > 0);
+        require(id > 0, _T102);
 
         // Look for an active order.
         while (pos != 0 && !isActive(pos)) {
@@ -440,7 +437,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
         uint256 id, //maker (ask) id
         uint256 pos //position to insert into
     ) internal {
-        require(isActive(id));
+        require(isActive(id), _T101);
 
         address buyGem = offers[id].buyGem;
         address payGem = offers[id].payGem;
@@ -481,13 +478,11 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
     ) internal returns (bool) {
         address buyGem = address(offers[id].buyGem);
         address payGem = address(offers[id].payGem);
-        require(span[payGem][buyGem] > 0);
-
-        require(rank[id].delb == 0);
+        require(span[payGem][buyGem] > 0 && rank[id].delb == 0, _T110);
 
         if (id != best[payGem][buyGem]) {
             // offers[id] is not the highest offer
-            require(rank[rank[id].next].prev == id);
+            require(rank[rank[id].next].prev == id, _T110);
             rank[rank[id].next].prev = rank[id].prev;
         } else {
             //offers[id] is the highest offer
@@ -496,7 +491,7 @@ contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
 
         if (rank[id].prev != 0) {
             //offers[id] is not the lowest offer
-            require(rank[rank[id].prev].next == id);
+            require(rank[rank[id].prev].next == id, _T110);
             rank[rank[id].prev].next = rank[id].next;
         }
 

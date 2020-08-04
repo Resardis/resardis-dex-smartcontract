@@ -55,18 +55,18 @@ contract EventfulMarket {
 // @TODO: DSMath was removed as it is imported in EternalStorage
 contract SimpleMarket is EternalStorage, EventfulMarket {
     modifier can_buy(uint256 id) {
-        require(isActive(id));
+        require(isActive(id), _T101);
         _;
     }
 
     modifier can_cancel(uint256 id) {
-        require(isActive(id));
-        require(getOwner(id) == msg.sender);
+        require(isActive(id), _T101);
+        require(getOwner(id) == msg.sender, _S101);
         _;
     }
 
     modifier synchronized {
-        require(!_locked);
+        require(!_locked, _S102);
         _locked = true;
         _;
         _locked = false;
@@ -195,18 +195,14 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         address buyGem,
         uint8 offerType
     ) internal synchronized returns (uint256 id) {
-        require(uint128(payAmt) == payAmt);
-        require(uint128(buyAmt) == buyAmt);
-        require(payAmt > 0);
-        // @TODO: Why below cannot be true??
-        // require(payGem != IERC20(0x0));
-        require(buyAmt > 0);
-        // @TODO: Why below cannot be true??
-        // require(buyGem != IERC20(0x0));
-        require(payGem != buyGem);
+        require(uint128(payAmt) == payAmt && uint128(buyAmt) == buyAmt, _T105);
+        require(payAmt > 0 && buyAmt > 0, _T106);
+
+        require(payGem != buyGem, _T107);
         require(
             add(tokensInUse[address(payGem)][msg.sender], payAmt) <=
-                tokens[address(payGem)][msg.sender]
+                tokens[address(payGem)][msg.sender],
+            _F101
         );
 
         OfferInfo memory info;
@@ -248,11 +244,11 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         OfferInfo memory offer = offers[id];
         uint256 spend = mul(quantity, offer.buyAmt) / offer.payAmt;
 
-        require(uint128(spend) == spend);
-        require(uint128(quantity) == quantity);
+        require(uint128(spend) == spend && uint128(quantity) == quantity, _T105);
         require(
             add(tokensInUse[address(offer.buyGem)][msg.sender], spend) <=
-                tokens[address(offer.buyGem)][msg.sender]
+                tokens[address(offer.buyGem)][msg.sender],
+            _F101
         );
 
         // For backwards semantic compatibility.
@@ -327,7 +323,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
-        require(_buy(uint256(id), maxTakeAmount, offerType));
+        require(_buy(uint256(id), maxTakeAmount, offerType), _T109);
     }
 
     function _nextId() internal returns (uint256) {
