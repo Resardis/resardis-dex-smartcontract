@@ -22,10 +22,6 @@ contract EternalStorage is ErrorCodes, DSMath {
         uint256 balance
     );
 
-    event LogAllowedDepositToken(address token, bool state);
-
-    event LogAllowedWithdrawToken(address token, bool state);
-
     event LogOfferType(uint8 offerType, bool state);
 
     address public admin; //the admin address
@@ -109,10 +105,6 @@ contract EternalStorage is ErrorCodes, DSMath {
     mapping(address => mapping(address => uint256)) public span;
     //minimum sell amount for a token to avoid dust offers
     mapping(address => uint256) public dust;
-    mapping(address => bool) public allowedDepositTokens;
-    //mapping of token addresses to permission.
-    //If true, token is allowed to be withdrawed.
-    mapping(address => bool) public allowedWithdrawTokens;
     //mapping of available offer types to boolean (true=present)
     //0->Limit, 1->Market, 2->Fill-or-Kill
     mapping(uint8 => bool) public offerTypes;
@@ -155,7 +147,6 @@ contract EternalStorage is ErrorCodes, DSMath {
         //remember to call Token(address).approve(this, amount)
         //or this contract will not be able to do the transfer on your behalf.
         require(token != address(0), _F102);
-        require(allowedDepositTokens[token] == true, _F103);
 
         tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
 
@@ -173,7 +164,6 @@ contract EternalStorage is ErrorCodes, DSMath {
 
     function withdrawToken(address token, uint256 amount) external {
         require(token != address(0), _F102);
-        require(allowedWithdrawTokens[token] == true, _F103);
         require(tokens[token][msg.sender] >= amount, _F101);
 
         DepositWithdrawInfo memory withdrawInfo;
@@ -188,19 +178,6 @@ contract EternalStorage is ErrorCodes, DSMath {
         require(IERC20(token).transfer(msg.sender, amount), _F104);
 
         emit LogWithdraw(token, msg.sender, amount, tokens[token][msg.sender]);
-    }
-
-    function changeAllowedToken(
-        address token_,
-        bool depositPermit_,
-        bool withdrawPermit_
-    ) external {
-        require(msg.sender == admin, _S101);
-        allowedDepositTokens[token_] = depositPermit_;
-        allowedWithdrawTokens[token_] = withdrawPermit_;
-
-        emit LogAllowedDepositToken(token_, depositPermit_);
-        emit LogAllowedWithdrawToken(token_, withdrawPermit_);
     }
 
     function setOfferType(uint8 offerType, bool state) external {
@@ -218,11 +195,4 @@ contract EternalStorage is ErrorCodes, DSMath {
         return tokensInUse[token][user];
     }
 
-    function getAllowedDepositToken(address token_) external view returns (bool) {
-        return allowedDepositTokens[token_];
-    }
-
-    function getAllowedWithdrawToken(address token_) external view returns (bool) {
-        return allowedWithdrawTokens[token_];
-    }
 }

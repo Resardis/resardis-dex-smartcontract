@@ -97,8 +97,6 @@ contract('TestResardis-Trading', async accounts => {
 
     // allow ETH and Token orders
     const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, true, false, { from: currentAdmin });
-    await dexInstance.changeAllowedToken(addressZero, true, false, { from: currentAdmin });
 
     // Values before offer is made
     const initBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
