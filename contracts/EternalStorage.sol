@@ -3,11 +3,12 @@ pragma experimental ABIEncoderV2;
 
 import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";
+import "../lib/dapphub/DSAuth.sol";
 
 import "./ErrorCodes.sol";
 
 // solhint-disable-next-line max-states-count
-contract EternalStorage is ErrorCodes, DSMath {
+contract EternalStorage is ErrorCodes, DSMath, DSAuth {
     event LogDeposit(
         address indexed token,
         address indexed user,
@@ -23,8 +24,6 @@ contract EternalStorage is ErrorCodes, DSMath {
     );
 
     event LogOfferType(uint8 offerType, bool state);
-
-    address public admin; //the admin address
 
     uint256 public lastOfferId; // id of the last offer
 
@@ -180,8 +179,7 @@ contract EternalStorage is ErrorCodes, DSMath {
         emit LogWithdraw(token, msg.sender, amount, tokens[token][msg.sender]);
     }
 
-    function setOfferType(uint8 offerType, bool state) external {
-        require(msg.sender == admin, _S101);
+    function setOfferType(uint8 offerType, bool state) external auth {
         offerTypes[offerType] = state;
 
         emit LogOfferType(offerType, state);

@@ -2,7 +2,6 @@ pragma solidity ^0.5.17;
 pragma experimental ABIEncoderV2;
 
 import "./MarketBase.sol";
-import "../../lib/dapphub/DSAuth.sol";
 import "../../lib/dapphub/DSNote.sol";
 
 contract MatchingEvents {
@@ -10,7 +9,7 @@ contract MatchingEvents {
     event LogSortedOffer(uint256 id);
 }
 
-contract MatchingMarket is MatchingEvents, DSAuth, SimpleMarket, DSNote {
+contract MatchingMarket is MatchingEvents, SimpleMarket, DSNote {
     modifier can_cancel(uint256 id) {
         require(isActive(id), _T101);
         require(msg.sender == getOwner(id) || id == dustId, _S101);
