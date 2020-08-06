@@ -2,14 +2,13 @@ pragma solidity ^0.5.17;
 pragma experimental ABIEncoderV2;
 
 import "./MarketBase.sol";
-import "../../lib/dapphub/DSNote.sol";
 
 contract MatchingEvents {
-    event LogMinSell(address payGem, uint256 minAmount);
+    event LogMinSell(address payGem, uint256 minAmount, address caller);
     event LogSortedOffer(uint256 id);
 }
 
-contract MatchingMarket is MatchingEvents, SimpleMarket, DSNote {
+contract MatchingMarket is MatchingEvents, SimpleMarket {
     modifier can_cancel(uint256 id) {
         require(isActive(id), _T101);
         require(msg.sender == getOwner(id) || id == dustId, _S101);
@@ -51,9 +50,9 @@ contract MatchingMarket is MatchingEvents, SimpleMarket, DSNote {
     function setMinSell(
         address payGem, //token to assign minimum sell amount to
         uint256 dustAmt //maker (ask) minimum sell amount
-    ) public auth note returns (bool) {
+    ) public auth returns (bool) {
         dust[address(payGem)] = dustAmt;
-        emit LogMinSell(address(payGem), dustAmt);
+        emit LogMinSell(address(payGem), dustAmt, msg.sender);
         return true;
     }
 
