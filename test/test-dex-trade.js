@@ -6,6 +6,7 @@ const erc20 = artifacts.require('ERC20MintableX');
 
 contract('TestResardis-Trading', async accounts => {
   let addressZero;
+  let currentAdmin;
   let initMinter;
   let firstAccount;
   let secAccount;
@@ -39,6 +40,7 @@ contract('TestResardis-Trading', async accounts => {
 
   beforeEach('Assign Trading variables', async () => {
     addressZero = web3.utils.toChecksumAddress('0x0000000000000000000000000000000000000000');
+    currentAdmin = accounts[0];
     initMinter = accounts[0];
     firstAccount = accounts[6];
     secAccount = accounts[7];
@@ -67,8 +69,6 @@ contract('TestResardis-Trading', async accounts => {
 
   it('Allow limit and market orders.', async () => {
     // Get initial values
-    const currentAdmin = await dexInstance.admin.call();
-
     const initLimit = await dexInstance.offerTypes.call(0);
     const initMarket = await dexInstance.offerTypes.call(1);
 
@@ -95,14 +95,11 @@ contract('TestResardis-Trading', async accounts => {
     const finalBalance = await dexInstance.balanceOf(addressZero, firstAccount, { from: firstAccount });
     const supposedBalance = initBalance.add(depAmountEth);
 
-    // allow ETH and Token orders
-    const currentAdmin = await dexInstance.admin.call();
-
     // Values before offer is made
     const initBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const initLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
     const initLastOfferId = await dexInstance.lastOfferId.call();
-    const initIdIndex = await dexInstance.getIdIndexRaw(firstAccount, initLastOfferId);
+    const initIdIndex = await dexInstance.getIdIndexProcessed(firstAccount, initLastOfferId);
 
     // Place the order
     const initCounterOfferMadeTotal = counterOfferMadeTotal;
@@ -123,11 +120,10 @@ contract('TestResardis-Trading', async accounts => {
     const finalBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const finalLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
     const finalLastOfferId = await dexInstance.lastOfferId.call();
-    const finalIdIndex = await dexInstance.getIdIndexRaw(firstAccount, finalLastOfferId);
+    const finalIdIndex = await dexInstance.getIdIndexProcessed(firstAccount, finalLastOfferId);
 
     // Get offer values
     const actualOffer = await dexInstance.getOffer(finalLastOfferId);
-    const historcalOffer = await dexInstance.getSingleOfferFromHistory(firstAccount, finalLastOfferId);
 
     // Cancel the order
     await dexInstance.cancel(finalLastOfferId, { from: firstAccount, value: 0 });
@@ -137,9 +133,8 @@ contract('TestResardis-Trading', async accounts => {
     const afterCancelBalanceInUse = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const afterCancelLastHistoryIndex = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
     const afterCancelLastOfferId = await dexInstance.lastOfferId.call();
-    const afterCancelIdIndex = await dexInstance.getIdIndexRaw(firstAccount, afterCancelLastOfferId);
+    const afterCancelIdIndex = await dexInstance.getIdIndexProcessed(firstAccount, afterCancelLastOfferId);
     const afterCancelActualOffer = await dexInstance.getOffer(afterCancelLastOfferId);
-    const afterCancelHistorcalOffer = await dexInstance.getSingleOfferFromHistory(firstAccount, afterCancelLastOfferId);
 
     // Start assertions
     assert.equal(afterCancelBalanceInUse.toString(), valueBigZero.toString());
@@ -153,30 +148,10 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(afterCancelActualOffer[2].toString(), valueBigZero.toString());
     assert.equal(afterCancelActualOffer[3].toString(), addressZero.toString());
 
-    assert.equal(afterCancelHistorcalOffer[0].toString(), amountGive.toString());
-    assert.equal(afterCancelHistorcalOffer[1].toString(), addressZero.toString());
-    assert.equal(afterCancelHistorcalOffer[2].toString(), amountGet.toString());
-    assert.equal(afterCancelHistorcalOffer[3].toString(), tokenAddress.toString());
-    assert.isTrue(afterCancelHistorcalOffer[4]);
-    assert.isFalse(afterCancelHistorcalOffer[5]);
-    assert.equal(afterCancelHistorcalOffer[6].toString(), valueBigZero.toString());
-    assert.equal(afterCancelHistorcalOffer[7].toString(), valueBigZero.toString());
-    assert.equal(afterCancelHistorcalOffer[6].toString(), historcalOffer[6].toString());
-    assert.equal(afterCancelHistorcalOffer[7].toString(), historcalOffer[7].toString());
-
     assert.equal(actualOffer[0].toString(), amountGive.toString());
     assert.equal(actualOffer[1].toString(), addressZero.toString());
     assert.equal(actualOffer[2].toString(), amountGet.toString());
     assert.equal(actualOffer[3].toString(), tokenAddress.toString());
-
-    assert.equal(historcalOffer[0].toString(), amountGive.toString());
-    assert.equal(historcalOffer[1].toString(), addressZero.toString());
-    assert.equal(historcalOffer[2].toString(), amountGet.toString());
-    assert.equal(historcalOffer[3].toString(), tokenAddress.toString());
-    assert.isFalse(historcalOffer[4]);
-    assert.isFalse(historcalOffer[5]);
-    assert.equal(historcalOffer[6].toString(), valueBigZero.toString());
-    assert.equal(historcalOffer[7].toString(), valueBigZero.toString());
 
     assert.notEqual(initBalance.toString(), finalBalance.toString());
     assert.equal(supposedBalance.toString(), finalBalance.toString());
@@ -195,10 +170,9 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(finalLastOfferId.toString(), (initLastOfferId.add(web3.utils.toBN('1'))).toString());
 
 
-    assert.notEqual(initIdIndex.toString(), finalIdIndex.toString());
+    assert.equal(initIdIndex.toString(), finalIdIndex.toString()); // we have no orders at the beginning
     assert.equal(initIdIndex.toString(), (web3.utils.toBN(initCounterOfferMadeFirst)).toString());
-    assert.equal(finalIdIndex.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst)).toString());
-    assert.equal(finalIdIndex.toString(), (initIdIndex.add(web3.utils.toBN('1'))).toString());
+    assert.equal(finalIdIndex.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst-1)).toString());
   });
 
   it('Place a limit order from the First Account. Place a limit order that DO NOT MATCH from the Second Account.', async () => {
@@ -222,12 +196,12 @@ contract('TestResardis-Trading', async accounts => {
     const initEthBalanceInUseFirst = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const initTokenBalanceInUseFirst = await dexInstance.balanceInUse(tokenAddress, firstAccount, { from: firstAccount });
     const initLastHistoryIndexFirst = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
-    const initIdIndexFirst = await dexInstance.getIdIndexRaw(firstAccount, initLastOfferIdCommon);
+    const initIdIndexFirst = await dexInstance.getIdIndexProcessed(firstAccount, initLastOfferIdCommon);
 
     const initEthBalanceInUseSec = await dexInstance.balanceInUse(addressZero, secAccount, { from: secAccount });
     const initTokenBalanceInUseSec = await dexInstance.balanceInUse(tokenAddress, secAccount, { from: secAccount });
     const initLastHistoryIndexSec = await dexInstance.lastOffersHistoryIndex.call(secAccount);
-    const initIdIndexSec = await dexInstance.getIdIndexRaw(secAccount, initLastOfferIdCommon);
+    const initIdIndexSec = await dexInstance.getIdIndexProcessed(secAccount, initLastOfferIdCommon);
 
     // Place the offers
     const initCounterOfferMadeTotal = counterOfferMadeTotal;
@@ -259,17 +233,14 @@ contract('TestResardis-Trading', async accounts => {
     const finalEthBalanceInUseFirst = await dexInstance.balanceInUse(addressZero, firstAccount, { from: firstAccount });
     const finalTokenBalanceInUseFirst = await dexInstance.balanceInUse(tokenAddress, firstAccount, { from: firstAccount });
     const finalLastHistoryIndexFirst = await dexInstance.lastOffersHistoryIndex.call(firstAccount);
-    const finalIdIndexFirst = await dexInstance.getIdIndexRaw(firstAccount, afterFirstLastOfferId);
+    const finalIdIndexFirst = await dexInstance.getIdIndexProcessed(firstAccount, afterFirstLastOfferId);
     const actualOfferFirst = await dexInstance.getOffer(afterFirstLastOfferId);
-    const historcalOfferFirst = await dexInstance.getSingleOfferFromHistory(firstAccount, afterFirstLastOfferId);
 
     const finalEthBalanceInUseSec = await dexInstance.balanceInUse(addressZero, secAccount, { from: secAccount });
     const finalTokenBalanceInUseSec = await dexInstance.balanceInUse(tokenAddress, secAccount, { from: secAccount });
     const finalLastHistoryIndexSec = await dexInstance.lastOffersHistoryIndex.call(secAccount);
-    const finalIdIndexSec = await dexInstance.getIdIndexRaw(secAccount, afterSecLastOfferId);
+    const finalIdIndexSec = await dexInstance.getIdIndexProcessed(secAccount, afterSecLastOfferId);
     const actualOfferSec = await dexInstance.getOffer(afterSecLastOfferId);
-    const historcalOfferSec = await dexInstance.getSingleOfferFromHistory(secAccount, afterSecLastOfferId);
-
 
     assert.notEqual(befDepEthBalFirst.toString(), aftDepEthBalFirst.toString());
     assert.equal(aftDepEthBalFirst.toString(), (befDepEthBalFirst.add(depAmountEth)).toString());
@@ -291,8 +262,8 @@ contract('TestResardis-Trading', async accounts => {
     assert.notEqual(initLastHistoryIndexFirst.toString(), finalLastHistoryIndexFirst.toString());
     assert.notEqual(initLastOfferIdCommon.toString(), afterFirstLastOfferId.toString());
     assert.equal(initIdIndexFirst.add(web3.utils.toBN('1')).toString(), finalIdIndexFirst.toString());
-    assert.equal(initIdIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst)).toString());
-    assert.equal(finalIdIndexFirst.toString(), web3.utils.toBN(finalCounterOfferMadeFirst).toString());
+    assert.equal(initIdIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst-1)).toString());
+    assert.equal(finalIdIndexFirst.toString(), web3.utils.toBN(finalCounterOfferMadeFirst-1).toString());
     assert.equal(initLastHistoryIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst)).toString());
     assert.equal(finalLastHistoryIndexFirst.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst)).toString());
     assert.equal(afterFirstLastOfferId.toString(), (web3.utils.toBN(initLastOfferIdCommon)).add(web3.utils.toBN('1')).toString());
@@ -300,9 +271,9 @@ contract('TestResardis-Trading', async accounts => {
 
     assert.notEqual(initLastHistoryIndexSec.toString(), finalLastHistoryIndexSec.toString());
     assert.notEqual(initLastOfferIdCommon.toString(), afterSecLastOfferId.toString());
-    assert.equal(initIdIndexSec.add(web3.utils.toBN('1')).toString(), finalIdIndexSec.toString());
+    assert.equal(initIdIndexSec.toString(), finalIdIndexSec.toString());
     assert.equal(initIdIndexSec.toString(), (web3.utils.toBN(initCounterOfferMadeSec)).toString());
-    assert.equal(finalIdIndexSec.toString(), (web3.utils.toBN(finalCounterOfferMadeSec)).toString());
+    assert.equal(finalIdIndexSec.toString(), (web3.utils.toBN(finalCounterOfferMadeSec-1)).toString());
     assert.equal(initLastHistoryIndexSec.toString(), (web3.utils.toBN(initCounterOfferMadeSec)).toString());
     assert.equal(afterSecLastOfferId.toString(), initLastOfferIdCommon.add(web3.utils.toBN('2')).toString());
     assert.equal(initLastOfferIdCommon.add(web3.utils.toBN('2')).toString(), afterSecLastOfferId.toString());

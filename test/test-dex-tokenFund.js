@@ -51,8 +51,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to deposit Token and succeed', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
     // deposit
     const initBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
     await tokenInstance.approve(dexAddress, depAmount, { from: depAccount, value: 0 });
@@ -65,8 +63,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token and fail. Overdraft.', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
@@ -84,8 +80,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token and succeed', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
