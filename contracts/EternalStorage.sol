@@ -1,5 +1,4 @@
 pragma solidity ^0.5.17;
-pragma experimental ABIEncoderV2;
 
 import "../lib/openzeppelin/IERC20.sol";
 import "../lib/dapphub/DSMath.sol";
@@ -25,17 +24,13 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
 
     event LogOfferType(uint8 offerType, bool state);
 
-    uint256 public lastOfferId; // id of the last offer
-
-    uint256 public dustId; // id of the latest offer marked as dust
-
-    bool internal _locked; // re-entrancy protection
-
     struct DepositWithdrawInfo {
         address token; // address of deposited/withdrawn token
         uint256 amount; // amount of deposited/withdrawn token
         address owner;
         uint64 timestamp;
+        bool deposit;
+        bool withdraw;
     }
 
     struct SortInfo {
@@ -59,20 +54,42 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
     // Used in permanent order history book
     // of which no element gets ever deleted
     struct OfferInfoHistory {
+        uint256 id;
         uint256 payAmt;
+        uint256 filledPayAmt;
         address payGem;
         uint256 buyAmt;
+        uint256 filledBuyAmt;
         address buyGem;
         address owner;
         uint64 timestamp;
-        uint256 id;
+        uint8 offerType;
         bool cancelled;
         bool filled;
-        uint256 filledPayAmt;
-        uint256 filledBuyAmt;
-        uint8 offerType;
     }
 
+    uint256 public lastOfferId; // id of the last offer
+    uint256 public dustId; // id of the latest offer marked as dust
+    bool internal _locked; // re-entrancy protection
+
+    //doubly linked lists of sorted offer ids
+    mapping(uint256 => SortInfo) public rank;
+    //mapping of offer IDs to offer info, volatile order book
+    mapping(uint256 => OfferInfo) public offers;
+    //minimum sell amount for a token to avoid dust offers
+    mapping(address => uint256) public dust;
+    //mapping of user accounts to the (last index no of offersHistory + 1)
+    //thus the actual last index is -1
+    mapping(address => uint256) public lastOffersHistoryIndex;
+    //mapping of available offer types to boolean (true=present)
+    //0->Limit, 1->Market, 2->Fill-or-Kill
+    mapping(uint8 => bool) public offerTypes;
+    //mapping of token addresses to permission.
+    //If true, token is allowed to be deposited/traded/ordered.
+    //id of the highest offer for a token pair
+    mapping(address => mapping(address => uint256)) public best;
+    //number of offers stored for token pair in sorted orderbook
+    mapping(address => mapping(address => uint256)) public span;
     // @TODO: Can we use IERC20 type instead of address (implicit conversion error)
     //mapping of token addresses to mapping of total account balances (token=0 means Ether)
     mapping(address => mapping(address => uint256)) public tokens;
@@ -80,43 +97,17 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
     //mapping of token addresses to mapping of locked account balances (token=0 means Ether)
     //locked = in use = this amount of tokens is currently in order book
     mapping(address => mapping(address => uint256)) public tokensInUse;
-    //mapping of accounts to mapping of token addresses to deposit info (token=0 => Ether)
-    mapping(address => mapping(address => DepositWithdrawInfo[])) public depositHistory;
-    //mapping of accounts to mapping of token addresses to withdraw info (token=0 => Ether)
-    mapping(address => mapping(address => DepositWithdrawInfo[])) public withdrawHistory;
-    //doubly linked lists of sorted offer ids
-    mapping(uint256 => SortInfo) public rank;
-    //mapping of offer IDs to offer info, volatile order book
-    mapping(uint256 => OfferInfo) public offers;
-    //mapping of user accounts to mapping of OfferInfoHistory array
-    mapping(address => OfferInfoHistory[]) public offersHistory;
-    //mapping of user accounts to the (last index no of offersHistory + 1)
-    //thus the actual last index is -1
-    mapping(address => uint256) public lastOffersHistoryIndex;
+    //mapping of accounts to mapping of token addresses to deposit/withdraw info (token=0 => Ether)
+    mapping(address => mapping(address => DepositWithdrawInfo[])) public depositWithdrawHistory;
     //mapping of user accounts to mapping of offer ids to offersHistory index + 1
     //again, the actual last index is -1
     mapping(address => mapping(uint256 => uint256)) public offersHistoryIndices;
-    //mapping of token addresses to permission.
-    //If true, token is allowed to be deposited/traded/ordered.
-    //id of the highest offer for a token pair
-    mapping(address => mapping(address => uint256)) public best;
-    //number of offers stored for token pair in sorted orderbook
-    mapping(address => mapping(address => uint256)) public span;
-    //minimum sell amount for a token to avoid dust offers
-    mapping(address => uint256) public dust;
-    //mapping of available offer types to boolean (true=present)
-    //0->Limit, 1->Market, 2->Fill-or-Kill
-    mapping(uint8 => bool) public offerTypes;
+    //mapping of user accounts to mapping of OfferInfoHistory array
+    mapping(address => OfferInfoHistory[]) public offersHistory;
 
     function deposit() external payable {
+        _setDepWithHist(address(0), msg.value, true, false);
         tokens[address(0)][msg.sender] = add(tokens[address(0)][msg.sender], msg.value);
-
-        DepositWithdrawInfo memory depositInfo;
-        depositInfo.token = address(0);
-        depositInfo.amount = msg.value;
-        depositInfo.owner = msg.sender;
-        depositInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
-        depositHistory[msg.sender][address(0)].push(depositInfo);
 
         emit LogDeposit(
             address(0),
@@ -128,14 +119,9 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
 
     function withdraw(uint256 amount) external {
         require(tokens[address(0)][msg.sender] >= amount, _F101);
-        tokens[address(0)][msg.sender] = sub(tokens[address(0)][msg.sender], amount);
 
-        DepositWithdrawInfo memory withdrawInfo;
-        withdrawInfo.token = address(0);
-        withdrawInfo.amount = amount;
-        withdrawInfo.owner = msg.sender;
-        withdrawInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
-        withdrawHistory[msg.sender][address(0)].push(withdrawInfo);
+        _setDepWithHist(address(0), amount, false, true);
+        tokens[address(0)][msg.sender] = sub(tokens[address(0)][msg.sender], amount);
 
         msg.sender.transfer(amount);
 
@@ -147,14 +133,8 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
         //or this contract will not be able to do the transfer on your behalf.
         require(token != address(0), _F102);
 
+        _setDepWithHist(token, amount, true, false);
         tokens[token][msg.sender] = add(tokens[token][msg.sender], amount);
-
-        DepositWithdrawInfo memory depositInfo;
-        depositInfo.token = token;
-        depositInfo.amount = amount;
-        depositInfo.owner = msg.sender;
-        depositInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
-        depositHistory[msg.sender][token].push(depositInfo);
 
         require(IERC20(token).transferFrom(msg.sender, address(this), amount), _F104);
 
@@ -165,13 +145,7 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
         require(token != address(0), _F102);
         require(tokens[token][msg.sender] >= amount, _F101);
 
-        DepositWithdrawInfo memory withdrawInfo;
-        withdrawInfo.token = token;
-        withdrawInfo.amount = amount;
-        withdrawInfo.owner = msg.sender;
-        withdrawInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
-        withdrawHistory[msg.sender][token].push(withdrawInfo);
-
+        _setDepWithHist(token, amount, false, true);
         tokens[token][msg.sender] = sub(tokens[token][msg.sender], amount);
 
         require(IERC20(token).transfer(msg.sender, amount), _F104);
@@ -191,6 +165,24 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
 
     function balanceInUse(address token, address user) external view returns (uint256) {
         return tokensInUse[token][user];
+    }
+
+    function _setDepWithHist(
+        address token,
+        uint256 amount,
+        bool isDeposit,
+        bool isWithdraw
+    )
+        internal
+    {
+        DepositWithdrawInfo memory depWithInfo;
+        depWithInfo.token = token;
+        depWithInfo.amount = amount;
+        depWithInfo.owner = msg.sender;
+        depWithInfo.timestamp = uint64(now); // solhint-disable-line not-rely-on-time
+        depWithInfo.deposit = isDeposit;
+        depWithInfo.withdraw = isWithdraw;
+        depositWithdrawHistory[msg.sender][token].push(depWithInfo);
     }
 
 }
