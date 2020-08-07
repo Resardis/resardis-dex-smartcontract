@@ -50,29 +50,7 @@ contract('TestResardis-TokenFunding', async accounts => {
     assert.equal(mintAmount.toString(), finalBalanceSec.toString());
   });
 
-  it('Try to deposit Token and fail. Token not whitelisted.', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, false, false, { from: currentAdmin });
-
-    const initBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
-    await tokenInstance.approve(dexAddress, depAmount, { from: depAccount, value: 0 });
-    try {
-      await dexInstance.depositToken(tokenAddress, depAmount, { from: depAccount, value: 0 });
-    } catch (err) {
-      console.log('Could not deposit the token that is not whitelisted as expected.');
-    }
-    const finalBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
-    const supposedBalance = initBalance.add(depAmount);
-
-    assert.equal(initBalance.toString(), finalBalance.toString());
-    assert.notEqual(supposedBalance.toString(), finalBalance.toString());
-  });
-
   it('Try to deposit Token and succeed', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, true, false, { from: currentAdmin });
     // deposit
     const initBalance = await dexInstance.balanceOf(tokenAddress, depAccount, { from: depAccount });
     await tokenInstance.approve(dexAddress, depAmount, { from: depAccount, value: 0 });
@@ -84,29 +62,7 @@ contract('TestResardis-TokenFunding', async accounts => {
     assert.equal(supposedBalance.toString(), finalBalance.toString());
   });
 
-  it('Try to withdraw Token and fail. Token not whitelisted.', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, true, false, { from: currentAdmin });
-    // deposit some amount first
-    await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
-    await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
-    // try to withdraw
-    const initBalance = await dexInstance.balanceOf(tokenAddress, drawAccount, { from: drawAccount });
-    try {
-      await dexInstance.withdrawToken(tokenAddress, normalDraftAmount, { from: drawAccount, value: 0 });
-    } catch (err) {
-      console.log('Could not withdraw the token that is not whitelisted as expected.');
-    }
-    const finalBalance = await dexInstance.balanceOf(tokenAddress, drawAccount, { from: drawAccount });
-
-    assert.equal(initBalance.toString(), finalBalance.toString());
-  });
-
   it('Try to withdraw Token and fail. Overdraft.', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, true, true, { from: currentAdmin });
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
@@ -124,9 +80,6 @@ contract('TestResardis-TokenFunding', async accounts => {
   });
 
   it('Try to withdraw Token and succeed', async () => {
-    // change permission
-    const currentAdmin = await dexInstance.admin.call();
-    await dexInstance.changeAllowedToken(tokenAddress, true, true, { from: currentAdmin });
     // deposit some amount first
     await tokenInstance.approve(dexAddress, depAmount, { from: drawAccount, value: 0 });
     await dexInstance.depositToken(tokenAddress, depAmount, { from: drawAccount, value: 0 });
