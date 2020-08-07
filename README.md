@@ -132,3 +132,4 @@ Last: Check chained import references in expiring and matching.
 + Array slicing and performance consideration.
 + Remove all the work involving changes and removals of array elements and migrate those to `TheGraph`.
 + Bytecode size is now too big, thus we temporarily reduced `solc` optimizer runs from `999999990`. After the clean-up, this should be increased again.
++ Dtata validation in `getIdIndexProcessed`: maybe require `id != 0`?
