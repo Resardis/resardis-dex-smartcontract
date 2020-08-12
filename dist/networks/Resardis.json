@@ -1,17 +1,17 @@
 {
   "80001": {
     "events": {
-      "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7": {
+      "0x4e3e4894f24a7c50bcb21d1ef785e34688bee05663c55d822eed7cefc2533123": {
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "token",
             "type": "address"
           },
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -29,7 +29,7 @@
             "type": "uint256"
           }
         ],
-        "name": "Deposit",
+        "name": "LogDeposit",
         "type": "event"
       },
       "0xa2c251311b1a7a475913900a2a73dc9789a21b04bc737e050bbc506dd4eb3488": {
@@ -100,7 +100,7 @@
         "name": "LogKill",
         "type": "event"
       },
-      "0x773ff502687307abfa024ac9f62f9752a0d210dac2ffd9a29e38e12e2ea82c82": {
+      "0x7505ec7a7702c25c46eee43b7058a1e55fd81aa1d4e72cbbe4c92628c4329193": {
         "anonymous": false,
         "inputs": [
           {
@@ -150,12 +150,18 @@
             "internalType": "uint64",
             "name": "timestamp",
             "type": "uint64"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "offerType",
+            "type": "uint8"
           }
         ],
         "name": "LogMake",
         "type": "event"
       },
-      "0xc28d56449b0bb31e64ee7487e061f57a2e72aea8019d810832f26dda099823d0": {
+      "0xcf4722bbed3c768465a15a36e7193c1ccd28f469fa72875f30e565f637a18437": {
         "anonymous": false,
         "inputs": [
           {
@@ -169,52 +175,34 @@
             "internalType": "uint256",
             "name": "minAmount",
             "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
           }
         ],
         "name": "LogMinSell",
         "type": "event"
       },
-      "0x644843f351d3fba4abcd60109eaff9f54bac8fb8ccf0bab941009c21df21cf31": {
-        "anonymous": true,
+      "0x485c3ec6e3753d7ad458d337b9ef2103cbc48e507943d0a5c2238277085b75ff": {
+        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
-            "internalType": "bytes4",
-            "name": "sig",
-            "type": "bytes4"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "guy",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "bytes32",
-            "name": "foo",
-            "type": "bytes32"
-          },
-          {
-            "indexed": true,
-            "internalType": "bytes32",
-            "name": "bar",
-            "type": "bytes32"
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "offerType",
+            "type": "uint8"
           },
           {
             "indexed": false,
-            "internalType": "uint256",
-            "name": "wad",
-            "type": "uint256"
-          },
-          {
-            "indexed": false,
-            "internalType": "bytes",
-            "name": "fax",
-            "type": "bytes"
+            "internalType": "bool",
+            "name": "state",
+            "type": "bool"
           }
         ],
-        "name": "LogNote",
+        "name": "LogOfferType",
         "type": "event"
       },
       "0x1abebea81bfa2637f28358c371278fb15ede7ea8dd28d2e03b112ff6d936ada4": {
@@ -256,7 +244,7 @@
         "name": "LogSortedOffer",
         "type": "event"
       },
-      "0x3383e3357c77fd2e3a4b30deea81179bc70a795d053d14d5b7f2f01d0fd4596f": {
+      "0x2fe6ff86ec5d7b378cc3868a8ea0d1645cad02b418b16f922f374ebe25de896e": {
         "anonymous": false,
         "inputs": [
           {
@@ -312,12 +300,18 @@
             "internalType": "uint64",
             "name": "timestamp",
             "type": "uint64"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "offerType",
+            "type": "uint8"
           }
         ],
         "name": "LogTake",
         "type": "event"
       },
-      "0x819e390338feffe95e2de57172d6faf337853dfd15c7a09a32d76f7fd2443875": {
+      "0x58a1479677120f4c0cb75b0997d282cae9936114b60b4437f827599f9a18a4f6": {
         "anonymous": false,
         "inputs": [
           {
@@ -343,22 +337,28 @@
             "internalType": "address",
             "name": "buyGem",
             "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint64",
+            "name": "timestamp",
+            "type": "uint64"
           }
         ],
         "name": "LogTrade",
         "type": "event"
       },
-      "0xf341246adaac6f497bc2a656f546ab9e182111d630394f0c57c710a59a2cb567": {
+      "0x74217ce088f00bfd283666b763c64f0d1b1c345591dfdd01891dddf52446694e": {
         "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "token",
             "type": "address"
           },
           {
-            "indexed": false,
+            "indexed": true,
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -376,12 +376,12 @@
             "type": "uint256"
           }
         ],
-        "name": "Withdraw",
+        "name": "LogWithdraw",
         "type": "event"
       }
     },
     "links": {},
-    "address": "0x96cd27302DbCbC292819232DA5c58D5b185e44a0",
-    "transactionHash": "0x89418e3f9183de4ac9bb978105ea96deebb2beb59ce519bb7816b19636dfc78d"
+    "address": "0xD10B1e13C03e6b887F82bE04e5E2e944479870B5",
+    "transactionHash": "0x2dfe741159a2d14b5d1744b96c2befcdeb23784fbe87ab9afbcdd9e00c929ea1"
   }
 }
