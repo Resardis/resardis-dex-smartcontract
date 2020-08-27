@@ -257,7 +257,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
-        require(_buy(uint256(id), maxTakeAmount, offerType), _T109);
+        require(_buy(id, maxTakeAmount, offerType), _T109);
     }
 
     //find the id of the next higher offer after offers[id]

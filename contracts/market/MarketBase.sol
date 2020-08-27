@@ -279,7 +279,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
-        require(_buy(uint256(id), maxTakeAmount, offerType), _T109);
+        require(_buy(id, maxTakeAmount, offerType), _T109);
     }
 
     function _nextId() internal returns (uint256) {
