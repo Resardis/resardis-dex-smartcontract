@@ -121,7 +121,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
                 //Decrease amount to sell
                 payAmt = sub(payAmt, offers[offerId].buyAmt);
                 //We take the whole offer
-                _take(offerId, uint128(offers[offerId].payAmt), offerType);
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt), offerType);
             } else {
                 // if lower
                 uint256 baux = rmul(
@@ -131,7 +131,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
                 //Add amount bought to acumulator
                 fillAmt = add(fillAmt, baux);
                 //We take the portion of the offer that we need
-                _take(offerId, uint128(baux), offerType);
+                _take(bytes32(offerId), uint128(baux), offerType);
                 payAmt = 0; //All amount is sold
             }
         }
@@ -165,7 +165,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
                 //Decrease amount to buy
                 buyAmt = sub(buyAmt, offers[offerId].payAmt);
                 //We take the whole offer
-                _take(offerId, uint128(offers[offerId].payAmt), offerType);
+                _take(bytes32(offerId), uint128(offers[offerId].payAmt), offerType);
             } else {
                 //if lower
                 fillAmt = add(
@@ -176,7 +176,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
                     ) / 10**9
                 ); //Add amount sold to acumulator
                 //We take the portion of the offer that we need
-                _take(offerId, uint128(buyAmt), offerType);
+                _take(bytes32(offerId), uint128(buyAmt), offerType);
                 buyAmt = 0; //All amount is bought
             }
         }
@@ -253,7 +253,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
     }
 
     function _take(
-        uint256 id,
+        bytes32 id,
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {

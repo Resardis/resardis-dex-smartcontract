@@ -132,7 +132,7 @@ module.exports = {
           enabled: true,
           runs: 1000,
         },
-        evmVersion: 'istanbul', // also check solc version for compatibility
+        evmVersion: 'constantinople', // also check solc version for compatibility
       },
     },
   },

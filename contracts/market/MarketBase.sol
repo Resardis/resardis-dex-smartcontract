@@ -128,7 +128,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         emit LogItemUpdate(id);
         emit LogKill(
-            id,
+            uint256(id),
             keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
             offer.owner,
             offer.payGem,
@@ -178,7 +178,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         emit LogItemUpdate(id);
         emit LogMake(
-            id,
+            uint256(id),
             keccak256(abi.encodePacked(payGem, buyGem)),
             msg.sender,
             payGem,
@@ -247,7 +247,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
 
         emit LogItemUpdate(id);
         emit LogTake(
-            id,
+            uint256(id),
             keccak256(abi.encodePacked(offer.payGem, offer.buyGem)),
             offer.owner,
             offer.payGem,
@@ -275,7 +275,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     }
 
     function _take(
-        uint256 id,
+        bytes32 id,
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
