@@ -253,7 +253,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
     }
 
     function _take(
-        uint256 id,
+        bytes32 id,
         uint128 maxTakeAmount,
         uint8 offerType
     ) internal {
