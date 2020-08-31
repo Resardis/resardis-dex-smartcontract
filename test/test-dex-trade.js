@@ -30,13 +30,12 @@ contract('TestResardis-Trading', async accounts => {
   // let earlyDate;
   // let resTokenAddress;
   let counterOfferMadeTotal = 0;
-  let counterOfferMadeFirst = 0;  // number of offers made from the first account
-  let counterOfferMadeSec = 0;  // number of offers made from the second account
+  let counterOfferMadeFirst = 0; // number of offers made from the first account
+  let counterOfferMadeSec = 0; // number of offers made from the second account
   let counterOfferCancelledFirst = 0;
-  let counterOfferCancelledSec = 0;
+  const counterOfferCancelledSec = 0;
 
   const valueBigZero = web3.utils.toBN('0');
-
 
   beforeEach('Assign Trading variables', async () => {
     addressZero = web3.utils.toChecksumAddress('0x0000000000000000000000000000000000000000');
@@ -86,7 +85,7 @@ contract('TestResardis-Trading', async accounts => {
 
     assert.isTrue(finalLimit);
     assert.isTrue(finalMarket);
-  })
+  });
 
   it('Place a single limit order, then cancel it.', async () => {
     // deposit some ETH
@@ -163,16 +162,14 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(finalLastHistoryIndex.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst)).toString());
     assert.equal(finalLastHistoryIndex.toString(), (initLastHistoryIndex.add(web3.utils.toBN('1'))).toString());
 
-
     assert.notEqual(initLastOfferId.toString(), finalLastOfferId.toString());
     assert.equal(initLastOfferId.toString(), (web3.utils.toBN(initCounterOfferMadeTotal)).toString());
     assert.equal(finalLastOfferId.toString(), (web3.utils.toBN(finalCounterOfferMadeTotal)).toString());
     assert.equal(finalLastOfferId.toString(), (initLastOfferId.add(web3.utils.toBN('1'))).toString());
 
-
     assert.equal(initIdIndex.toString(), finalIdIndex.toString()); // we have no orders at the beginning
     assert.equal(initIdIndex.toString(), (web3.utils.toBN(initCounterOfferMadeFirst)).toString());
-    assert.equal(finalIdIndex.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst-1)).toString());
+    assert.equal(finalIdIndex.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst - 1)).toString());
   });
 
   it('Place a limit order from the First Account. Place a limit order that DO NOT MATCH from the Second Account.', async () => {
@@ -249,7 +246,6 @@ contract('TestResardis-Trading', async accounts => {
     assert.equal(aftDepTokenBalSec.toString(), (befDepTokenBalSec.add(depAmountToken)).toString());
     assert.equal(initEthBalSec.toString(), valueBigZero.toString());
 
-
     assert.notEqual(initEthBalanceInUseFirst.toString(), finalEthBalanceInUseFirst.toString());
     assert.equal(initTokenBalanceInUseFirst.toString(), valueBigZero.toString());
     assert.equal(initEthBalanceInUseFirst.add(amountGiveEthNonMatch).toString(), finalEthBalanceInUseFirst.toString());
@@ -262,8 +258,8 @@ contract('TestResardis-Trading', async accounts => {
     assert.notEqual(initLastHistoryIndexFirst.toString(), finalLastHistoryIndexFirst.toString());
     assert.notEqual(initLastOfferIdCommon.toString(), afterFirstLastOfferId.toString());
     assert.equal(initIdIndexFirst.add(web3.utils.toBN('1')).toString(), finalIdIndexFirst.toString());
-    assert.equal(initIdIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst-1)).toString());
-    assert.equal(finalIdIndexFirst.toString(), web3.utils.toBN(finalCounterOfferMadeFirst-1).toString());
+    assert.equal(initIdIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst - 1)).toString());
+    assert.equal(finalIdIndexFirst.toString(), web3.utils.toBN(finalCounterOfferMadeFirst - 1).toString());
     assert.equal(initLastHistoryIndexFirst.toString(), (web3.utils.toBN(initCounterOfferMadeFirst)).toString());
     assert.equal(finalLastHistoryIndexFirst.toString(), (web3.utils.toBN(finalCounterOfferMadeFirst)).toString());
     assert.equal(afterFirstLastOfferId.toString(), (web3.utils.toBN(initLastOfferIdCommon)).add(web3.utils.toBN('1')).toString());
@@ -273,11 +269,10 @@ contract('TestResardis-Trading', async accounts => {
     assert.notEqual(initLastOfferIdCommon.toString(), afterSecLastOfferId.toString());
     assert.equal(initIdIndexSec.toString(), finalIdIndexSec.toString());
     assert.equal(initIdIndexSec.toString(), (web3.utils.toBN(initCounterOfferMadeSec)).toString());
-    assert.equal(finalIdIndexSec.toString(), (web3.utils.toBN(finalCounterOfferMadeSec-1)).toString());
+    assert.equal(finalIdIndexSec.toString(), (web3.utils.toBN(finalCounterOfferMadeSec - 1)).toString());
     assert.equal(initLastHistoryIndexSec.toString(), (web3.utils.toBN(initCounterOfferMadeSec)).toString());
     assert.equal(afterSecLastOfferId.toString(), initLastOfferIdCommon.add(web3.utils.toBN('2')).toString());
     assert.equal(initLastOfferIdCommon.add(web3.utils.toBN('2')).toString(), afterSecLastOfferId.toString());
     assert.equal(finalLastHistoryIndexSec.toString(), (web3.utils.toBN(finalCounterOfferMadeSec)).toString());
   });
-
 });
