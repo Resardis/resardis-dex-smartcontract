@@ -45,14 +45,14 @@
         "name": "LogItemUpdate",
         "type": "event"
       },
-      "0x9577941d28fff863bfbee4694a6a4a56fb09e169619189d2eaa750b5b4819995": {
+      "0xf6877e54c967a646baf11350c2c9894eb0600809ad0a0a73a98be7cb899ae62a": {
         "anonymous": false,
         "inputs": [
           {
             "indexed": true,
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "id",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
             "indexed": true,
@@ -100,14 +100,14 @@
         "name": "LogKill",
         "type": "event"
       },
-      "0x7505ec7a7702c25c46eee43b7058a1e55fd81aa1d4e72cbbe4c92628c4329193": {
+      "0xbe9c6bc9519518bedd38a741c503e3bec511cf358c546c46b70097b9acb0230a": {
         "anonymous": false,
         "inputs": [
           {
             "indexed": true,
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "id",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
             "indexed": true,
@@ -244,14 +244,14 @@
         "name": "LogSortedOffer",
         "type": "event"
       },
-      "0x2fe6ff86ec5d7b378cc3868a8ea0d1645cad02b418b16f922f374ebe25de896e": {
+      "0x2677fe69a1b5a781c7b0923fb64d1d4cf7062bd663c221defbeeb41a1dc5591f": {
         "anonymous": false,
         "inputs": [
           {
             "indexed": false,
-            "internalType": "bytes32",
+            "internalType": "uint256",
             "name": "id",
-            "type": "bytes32"
+            "type": "uint256"
           },
           {
             "indexed": true,
@@ -381,7 +381,7 @@
       }
     },
     "links": {},
-    "address": "0xD10B1e13C03e6b887F82bE04e5E2e944479870B5",
-    "transactionHash": "0x2dfe741159a2d14b5d1744b96c2befcdeb23784fbe87ab9afbcdd9e00c929ea1"
+    "address": "0xdf3786659dc64e343fFED27eD213Ed6138834B19",
+    "transactionHash": "0xa11c4b7e47e6a03d31b78bba20b9a51a47c715c35da0d29af0d18116a64e9f5f"
   }
 }
