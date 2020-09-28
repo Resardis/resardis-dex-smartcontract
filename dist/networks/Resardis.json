@@ -205,6 +205,98 @@
         "name": "LogOfferType",
         "type": "event"
       },
+      "0xe568a59e6794bc2827250e3b51e974097e157bfb9260a14c38428924eb065792": {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "name": "LogOrderFilled",
+        "type": "event"
+      },
+      "0x3139f3af6ae4a850ef516900d9e917bdc4d544352210f2d471c8dfda64be7d2c": {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "bytes32",
+            "name": "pair",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "payGem",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "payAmt",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "filledPayAmt",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "buyGem",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "buyAmt",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "filledBuyAmt",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint64",
+            "name": "timestamp",
+            "type": "uint64"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "cancelled",
+            "type": "bool"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "filled",
+            "type": "bool"
+          }
+        ],
+        "name": "LogOrderStatus",
+        "type": "event"
+      },
       "0x1abebea81bfa2637f28358c371278fb15ede7ea8dd28d2e03b112ff6d936ada4": {
         "anonymous": false,
         "inputs": [
@@ -381,7 +473,7 @@
       }
     },
     "links": {},
-    "address": "0xdf3786659dc64e343fFED27eD213Ed6138834B19",
-    "transactionHash": "0xa11c4b7e47e6a03d31b78bba20b9a51a47c715c35da0d29af0d18116a64e9f5f"
+    "address": "0x2120274b39F9e7E857757058742C366ca1371ef8",
+    "transactionHash": "0x2cc44df35a2a5d16e0aee01b7948a2d7e5cedec820c51a6404ee362a096c20ee"
   }
 }

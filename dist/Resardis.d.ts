@@ -239,6 +239,40 @@ interface ResardisInterface extends Interface {
       encodeTopics([offerType, state]: [null, null]): string[];
     }>;
 
+    LogOrderFilled: TypedEventDescription<{
+      encodeTopics([id]: [BigNumberish | null]): string[];
+    }>;
+
+    LogOrderStatus: TypedEventDescription<{
+      encodeTopics([
+        id,
+        pair,
+        payGem,
+        payAmt,
+        filledPayAmt,
+        buyGem,
+        buyAmt,
+        filledBuyAmt,
+        owner,
+        timestamp,
+        cancelled,
+        filled
+      ]: [
+        BigNumberish | null,
+        Arrayish | null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        string | null,
+        null,
+        null,
+        null
+      ]): string[];
+    }>;
+
     LogSetAuthority: TypedEventDescription<{
       encodeTopics([authority]: [string | null]): string[];
     }>;
@@ -1492,6 +1526,23 @@ export class Resardis extends Contract {
     LogMinSell(payGem: null, minAmount: null, caller: null): EventFilter;
 
     LogOfferType(offerType: null, state: null): EventFilter;
+
+    LogOrderFilled(id: BigNumberish | null): EventFilter;
+
+    LogOrderStatus(
+      id: BigNumberish | null,
+      pair: Arrayish | null,
+      payGem: null,
+      payAmt: null,
+      filledPayAmt: null,
+      buyGem: null,
+      buyAmt: null,
+      filledBuyAmt: null,
+      owner: string | null,
+      timestamp: null,
+      cancelled: null,
+      filled: null
+    ): EventFilter;
 
     LogSetAuthority(authority: string | null): EventFilter;
 
