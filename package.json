@@ -39,7 +39,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "yarn lint:js; yarn lint:sol",
-    "lint:fix": "yarn lint:js:fix",
+    "lint:fix": "yarn lint:js:fix; yarn lint:sol:fix",
     "lint:js": "yarn eslint .",
     "lint:js:fix": "yarn eslint . --fix",
     "lint:sol": "yarn prettier --check '**/*.sol'; yarn solhint 'contracts/**/*.sol'",
