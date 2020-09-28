@@ -133,3 +133,7 @@ Last: Check chained import references in expiring and matching.
 + Remove all the work involving changes and removals of array elements and migrate those to `TheGraph`.
 + Bytecode size is now too big, thus we temporarily reduced `solc` optimizer runs from `999999990`. After the clean-up, this should be increased again.
 + Dtata validation in `getIdIndexProcessed`: maybe require `id != 0`?
++ Check the bytes32 fix commits and merge:
+https://github.com/kmotoko/resardis-smartcontract/commit/8c29d056c66efa70953c620c9cd1b84c2b4112b4
+https://github.com/kmotoko/resardis-smartcontract/commit/b3ac68f53148235433c9447fc929e2a007fc038c
+https://github.com/kmotoko/resardis-smartcontract/commit/8b871b3464e8423bdac764bc128ddfd74a32971e
