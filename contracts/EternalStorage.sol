@@ -8,12 +8,7 @@ import "./ErrorCodes.sol";
 
 // solhint-disable-next-line max-states-count
 contract EternalStorage is ErrorCodes, DSMath, DSAuth {
-    event LogDeposit(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint256 balance
-    );
+    event LogDeposit(address indexed token, address indexed user, uint256 amount, uint256 balance);
 
     event LogWithdraw(
         address indexed token,
@@ -109,12 +104,7 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
         _setDepWithHist(address(0), msg.value, true, false);
         tokens[address(0)][msg.sender] = add(tokens[address(0)][msg.sender], msg.value);
 
-        emit LogDeposit(
-            address(0),
-            msg.sender,
-            msg.value,
-            tokens[address(0)][msg.sender]
-        );
+        emit LogDeposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
     }
 
     function withdraw(uint256 amount) external {
@@ -172,9 +162,7 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
         uint256 amount,
         bool isDeposit,
         bool isWithdraw
-    )
-        internal
-    {
+    ) internal {
         DepositWithdrawInfo memory depWithInfo;
         depWithInfo.token = token;
         depWithInfo.amount = amount;
@@ -184,5 +172,4 @@ contract EternalStorage is ErrorCodes, DSMath, DSAuth {
         depWithInfo.withdraw = isWithdraw;
         depositWithdrawHistory[msg.sender][token].push(depWithInfo);
     }
-
 }

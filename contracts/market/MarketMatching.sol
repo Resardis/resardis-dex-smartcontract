@@ -86,11 +86,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
     }
 
     //return the amount of better offers for a token pair
-    function getOfferCount(address sellGem, address buyGem)
-        public
-        view
-        returns (uint256)
-    {
+    function getOfferCount(address sellGem, address buyGem) public view returns (uint256) {
         return span[address(sellGem)][address(buyGem)];
     }
 
@@ -170,10 +166,8 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
                 //if lower
                 fillAmt = add(
                     fillAmt,
-                    rmul(
-                        buyAmt * 10**9,
-                        rdiv(offers[offerId].buyAmt, offers[offerId].payAmt)
-                    ) / 10**9
+                    rmul(buyAmt * 10**9, rdiv(offers[offerId].buyAmt, offers[offerId].payAmt)) /
+                        10**9
                 ); //Add amount sold to acumulator
                 //We take the portion of the offer that we need
                 _take(offerId, uint128(buyAmt), offerType);
@@ -200,8 +194,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
         }
         fillAmt = add(
             fillAmt,
-            rmul(payAmt * 10**9, rdiv(offers[offerId].payAmt, offers[offerId].buyAmt)) /
-                10**9
+            rmul(payAmt * 10**9, rdiv(offers[offerId].payAmt, offers[offerId].buyAmt)) / 10**9
         ); //Add proportional amount of last offer to buy accumulator
     }
 
@@ -222,8 +215,7 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
         }
         fillAmt = add(
             fillAmt,
-            rmul(buyAmt * 10**9, rdiv(offers[offerId].buyAmt, offers[offerId].payAmt)) /
-                10**9
+            rmul(buyAmt * 10**9, rdiv(offers[offerId].buyAmt, offers[offerId].payAmt)) / 10**9
         ); //Add proportional amount of last offer to pay accumulator
     }
 
@@ -371,27 +363,19 @@ contract MatchingMarket is MatchingEvents, SimpleMarket {
             // c * d > a * b + a + b + c + d, we write...
             if (
                 mul(mBuyAmt, tBuyAmt) >
-                mul(tPayAmt, mPayAmt) +
-                    (rounding ? mBuyAmt + tBuyAmt + tPayAmt + mPayAmt : 0)
+                mul(tPayAmt, mPayAmt) + (rounding ? mBuyAmt + tBuyAmt + tPayAmt + mPayAmt : 0)
             ) {
                 break;
             }
             // ^ The `rounding` parameter is a compromise borne of a couple days
             // of discussion.
-            _buy(
-                best[address(tBuyGem)][address(tPayGem)],
-                min(mPayAmt, tBuyAmt),
-                offerType
-            );
+            _buy(best[address(tBuyGem)][address(tPayGem)], min(mPayAmt, tBuyAmt), offerType);
             tBuyAmtOld = tBuyAmt;
             tBuyAmt = sub(tBuyAmt, min(mPayAmt, tBuyAmt));
             tPayAmt = mul(tBuyAmt, tPayAmt) / tBuyAmtOld;
 
             infoHistory.filledPayAmt = sub(tPayAmtInit, tPayAmt);
-            infoHistory.filledBuyAmt = add(
-                infoHistory.filledBuyAmt,
-                min(mPayAmt, tBuyAmt)
-            );
+            infoHistory.filledBuyAmt = add(infoHistory.filledBuyAmt, min(mPayAmt, tBuyAmt));
 
             if (tPayAmt == 0 || tBuyAmt == 0) {
                 infoHistory.filled = true;
