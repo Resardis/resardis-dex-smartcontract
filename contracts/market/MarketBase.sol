@@ -48,6 +48,23 @@ contract EventfulMarket {
         uint128 buyAmt,
         uint64 timestamp
     );
+
+    event LogOrderStatus(
+        uint256 indexed id,
+        bytes32 indexed pair,
+        address payGem,
+        uint256 payAmt,
+        uint256 filledPayAmt,
+        address buyGem,
+        uint256 buyAmt,
+        uint256 filledBuyAmt,
+        address indexed owner,
+        uint64 timestamp,
+        bool cancelled,
+        bool filled
+    );
+
+    event LogOrderFilled(uint256 indexed id);
 }
 
 // @TODO: Check contract inheritence in Solidity
@@ -93,11 +110,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         return (offer.payAmt, offer.payGem, offer.buyAmt, offer.buyGem);
     }
 
-    function getIdIndexProcessed(address owner, uint256 id)
-        public
-        view
-        returns (uint256)
-    {
+    function getIdIndexProcessed(address owner, uint256 id) public view returns (uint256) {
         if (offersHistoryIndices[owner][id] == uint256(0)) {
             return offersHistoryIndices[owner][id];
         } else {
@@ -108,12 +121,7 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
     // ---- Public entrypoints ---- //
 
     // Cancel an offer. Refunds offer maker.
-    function cancel(uint256 id)
-        public
-        can_cancel(id)
-        synchronized
-        returns (bool success)
-    {
+    function cancel(uint256 id) public can_cancel(id) synchronized returns (bool success) {
         // read-only offer. Modify an offer by directly accessing offers[id]
         OfferInfo memory offer = offers[id];
         delete offers[id];
@@ -124,7 +132,9 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         );
 
         uint256 idIndex = getIdIndexProcessed(msg.sender, id);
-        offersHistory[msg.sender][idIndex].cancelled = true;
+
+        OfferInfoHistory memory offerHistorical = offersHistory[msg.sender][idIndex];
+        offerHistorical.cancelled = true;
 
         emit LogItemUpdate(id);
         emit LogKill(
@@ -136,6 +146,21 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
             uint128(offer.payAmt),
             uint128(offer.buyAmt),
             uint64(now) // solhint-disable-line not-rely-on-time
+        );
+
+        emit LogOrderStatus(
+            uint256(id),
+            keccak256(abi.encodePacked(offerHistorical.payGem, offerHistorical.buyGem)),
+            offerHistorical.payGem,
+            offerHistorical.payAmt,
+            offerHistorical.filledPayAmt,
+            offerHistorical.buyGem,
+            offerHistorical.buyAmt,
+            offerHistorical.filledBuyAmt,
+            offerHistorical.owner,
+            uint64(now), // solhint-disable-line not-rely-on-time
+            offerHistorical.cancelled,
+            offerHistorical.filled
         );
 
         success = true;
@@ -208,17 +233,17 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         );
 
         // For backwards semantic compatibility.
-        if (
-            quantity == 0 || spend == 0 || quantity > offer.payAmt || spend > offer.buyAmt
-        ) {
+        if (quantity == 0 || spend == 0 || quantity > offer.payAmt || spend > offer.buyAmt) {
             return false;
         }
 
         offers[id].payAmt = sub(offer.payAmt, quantity);
         offers[id].buyAmt = sub(offer.buyAmt, spend);
 
-        OfferInfoHistory memory offerHistorical = offersHistory[offer
-            .owner][getIdIndexProcessed(offer.owner, id)];
+        OfferInfoHistory memory offerHistorical = offersHistory[offer.owner][getIdIndexProcessed(
+            offer.owner,
+            id
+        )];
         offerHistorical.filledPayAmt = add(offerHistorical.filledPayAmt, quantity);
         offerHistorical.filledBuyAmt = add(offerHistorical.filledBuyAmt, spend);
 
@@ -269,7 +294,24 @@ contract SimpleMarket is EternalStorage, EventfulMarket {
         if (offers[id].payAmt == 0) {
             delete offers[id];
             offerHistorical.filled = true;
+
+            emit LogOrderFilled(uint256(id));
         }
+
+        emit LogOrderStatus(
+            uint256(id),
+            keccak256(abi.encodePacked(offerHistorical.payGem, offerHistorical.buyGem)),
+            offerHistorical.payGem,
+            offerHistorical.payAmt,
+            offerHistorical.filledPayAmt,
+            offerHistorical.buyGem,
+            offerHistorical.buyAmt,
+            offerHistorical.filledBuyAmt,
+            offerHistorical.owner,
+            uint64(now), // solhint-disable-line not-rely-on-time
+            offerHistorical.cancelled,
+            offerHistorical.filled
+        );
 
         return true;
     }
