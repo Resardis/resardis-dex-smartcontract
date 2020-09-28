@@ -48,7 +48,7 @@
     "gen:types": "typechain --target ethers-v4 --outDir './dist/' './dist/abis/*.json'",
     "deploy:ganache": "bash scripts/start-ganache-truffle.sh migrate --reset --network ganache_local",
     "deploy:rinkeby": "rm -rvf build/; truffle migrate --reset --network rinkeby && node scripts/generate-artifacts.js",
-    "deploy:matic:testnet": "rm -rvf build/; truffle migrate --reset --network matic_testnet && node scripts/generate-artifacts.js",
+    "deploy:matic:testnet": "rm -rvf build/; truffle migrate --reset --network matic_testnet && node scripts/generate-artifacts.js && yarn gen:types",
     "test:ganache": "bash scripts/start-ganache-truffle.sh test --network ganache_local"
   },
   "engines": {
