@@ -137,3 +137,14 @@ Last: Check chained import references in expiring and matching.
 https://github.com/kmotoko/resardis-smartcontract/commit/8c29d056c66efa70953c620c9cd1b84c2b4112b4
 https://github.com/kmotoko/resardis-smartcontract/commit/b3ac68f53148235433c9447fc929e2a007fc038c
 https://github.com/kmotoko/resardis-smartcontract/commit/8b871b3464e8423bdac764bc128ddfd74a32971e
++ If someone gives a market order and nothing is filled, no events is emitted. Think if this is the correct way.
++        Revert or emit:
+     } else if (offerType == uint8(1)) {
+            // offerType = 1 -> Market Order
+            // Market orders are not given an ID
+            // Increase the history index as we push to the array
+            // But do not update offersHistoryIndices as this order
+            // does not have an ID
+            _nextIndex();
+            offersHistory[msg.sender].push(infoHistory);
+        }

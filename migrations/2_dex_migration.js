@@ -19,10 +19,10 @@ module.exports = async (deployer, network, accounts) => {
 
     const addressZero = web3.utils.toChecksumAddress('0x0000000000000000000000000000000000000000');
 
-    const mintAmount = web3.utils.toBN(web3.utils.toWei('10.00', 'ether'));
+    const mintAmount = web3.utils.toBN(web3.utils.toWei('1000000.00', 'ether'));
 
-    const depAmountEth = web3.utils.toBN(web3.utils.toWei('1.35', 'ether'));
-    const depAmountERC = web3.utils.toBN(web3.utils.toWei('3.95', 'ether'));
+    const depAmountEth = web3.utils.toBN(web3.utils.toWei('2.5', 'ether'));
+    const depAmountERC = web3.utils.toBN(web3.utils.toWei('2000.0', 'ether'));
 
     let amountGetSec = web3.utils.toBN(web3.utils.toWei('0.0020', 'ether'));
     let amountGiveSec = web3.utils.toBN(web3.utils.toWei('0.0013', 'ether'));
@@ -33,8 +33,16 @@ module.exports = async (deployer, network, accounts) => {
     console.log('DEPLOY AND MINT TEST ERC20');
     await deployer.deploy(erc20);
     const tokenInstance = await erc20.deployed();
+
+    // Add minters
+    // Note that admin account is already added during contract creation
+    await tokenInstance.addMinter(secAccount, { from: admin });
     await tokenInstance.addMinter(thirdAccount, { from: admin });
+
+    await tokenInstance.mint(admin, mintAmount, { from: admin, value: 0 });
+    await tokenInstance.mint(secAccount, mintAmount, { from: admin, value: 0 });
     await tokenInstance.mint(thirdAccount, mintAmount, { from: admin, value: 0 });
+
     const tokenAddress = web3.utils.toChecksumAddress(tokenInstance.address);
     console.log('Token Address = ', tokenAddress.toString());
 
@@ -50,10 +58,15 @@ module.exports = async (deployer, network, accounts) => {
     await dexInstance.setOfferType(1, true, { from: admin });
 
     console.log('DEPOSITING AMOUNTS');
-    // Deposit test erc20
+    // Approvals
+    await tokenInstance.approve(
+      dexAddress, depAmountERC, { from: secAccount, value: 0 },
+    );
     await tokenInstance.approve(
       dexAddress, depAmountERC, { from: thirdAccount, value: 0 },
     );
+
+    // Deposit test erc20
     await dexInstance.depositToken(
       tokenAddress, depAmountERC, { from: thirdAccount, value: 0 },
     );
@@ -64,7 +77,7 @@ module.exports = async (deployer, network, accounts) => {
     console.log('GIVING DUMMY ORDERS');
     // Fill with dummy Limit orders
     let i;
-    for (i = 0; i < 50; i++) {
+    for (i = 0; i < 60; i++) {
       amountGetSec = amountGetSec.add(
         web3.utils.toBN(web3.utils.toWei('0.0003', 'ether')),
       );
@@ -84,13 +97,13 @@ module.exports = async (deployer, network, accounts) => {
       // Give Ethereum, Get Matic Test ERC20
       await dexInstance.offer(
         amountGiveSec, addressZero, amountGetSec, tokenAddress, 0, true, 0,
-        { from: secAccount, value: 0 },
+        { from: secAccount, value: 0, gas: 800000 },
       );
 
       // Give Matic Test ERC20, Get Ethereum
       await dexInstance.offer(
         amountGiveThird, tokenAddress, amountGetThird, addressZero, 0, true, 0,
-        { from: thirdAccount, value: 0 },
+        { from: thirdAccount, value: 0, gas: 800000 },
       );
     }
   }

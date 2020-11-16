@@ -83,9 +83,10 @@ module.exports = {
     matic_testnet: {
       provider: () => new HDWalletProvider(mnemonic, 'https://rpc-mumbai.matic.today', 0, 10),
       network_id: 80001,
-      confirmations: 2,
-      timeoutBlocks: 400,
-      skipDryRun: true,
+      gasPrice: 3000000000, // in wei
+      confirmations: 1,
+      timeoutBlocks: 600,
+      skipDryRun: false,
     },
 
     // Another network with more advanced options...
@@ -132,7 +133,7 @@ module.exports = {
           enabled: true,
           runs: 1000,
         },
-        evmVersion: 'constantinople', // also check solc version for compatibility
+        evmVersion: 'istanbul', // also check solc version for compatibility
       },
     },
   },
